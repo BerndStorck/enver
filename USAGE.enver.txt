@@ -1,0 +1,7 @@
+Das Kommando "enver --help" zeigt alle Aufrufarten an, die das Script versteht.
+
+Das Ergebnis des Aufrufs "enver -V ..." wird an den Pager "less" weitergeleitet. In "less" kann man sich mit den Pfeiltasten bewegen. Beendet wird less durch die Taste q (wie "quit", "beenden").
+
+Soll die Ausgabe nicht in dem Pager enden, so genuegt es, an den Aufruf von enver die Zeichenkette "| cat" anzuhängen. Beispielsweise: 
+
+	enver -V walk | cat
