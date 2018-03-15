@@ -1,7 +1,43 @@
-Das Kommando "enver --help" zeigt alle Aufrufarten an, die das Script versteht.
 
-Das Ergebnis des Aufrufs "enver -V ..." wird an den Pager "less" weitergeleitet. In "less" kann man sich mit den Pfeiltasten bewegen. Beendet wird less durch die Taste q (wie "quit", "beenden").
+========================== USAGE.enver.txt ==============================
 
-Soll die Ausgabe nicht in dem Pager enden, so genuegt es, an den Aufruf von enver die Zeichenkette "| cat" anzuhängen. Beispielsweise: 
+LISTE ALLER AUFRUFVARIANTEN
+
+Das Kommando "enver --help" zeigt alle Aufrufvarianten an, die das Script
+versteht.
+
+
+STANDARDMODUS (enver -v)
+
+  Der Aufruf "enver SUCHWORT" oder gleichwertig "enver -v SUCHWORT"
+  startet enver im Standardmodus, der eine schnelle und kurze Antwort
+  liefert.
+
+
+AUSFÜHRLICHERE SUCHE (enver -V)
+
+  Soll enver gründlicher suchen und eine ausführlichere Antwort geben,
+  dann kann der Aufruf "enver -V SUCHWORT" benutzt werden. "enver -V"
+  liefert die Datensätze, die auch "enver -v" findet und, wenn vorhanden,
+  zustätzliche passende Datensätze. Außerdem unternimmt das Programm,
+  wenn es mit der Option "-V" aufgerufen wird, bis drei verschiedenartige
+  Versuche, die übergebene Zeichenkette in der Datenbasis zu finden und,
+  soweit irgend möglich, eine Auskunft über die gesuchte Zeichenkette zu
+  finden. Wenn "enver -V" keinen passenden Datensatz zum Suchwort findet,
+  dann kommt dieses Suchwort im englischen Teil der Datenbasis nicht vor.
+
+  Das Programm kommentiert jede erfolglose Suche über den
+  Standardfehlerkanal. Diese Rückmeldungen werden unterdrückt, wenn man
+  das Programm wie folgt aufruft:
+
+	enver -V SUCHWORT 2> /dev/null
+
+  Das Ergebnis des Aufrufs "enver -V ..." wird im Fall, dass mehr als
+  24 Ergebnisse gefunden werden, an den Pager "less" weitergeleitet. In
+  "less" kann man sich mit den Pfeiltasten bewegen. Beendet wird less
+  durch die Taste q (wie "quit", "beenden").
+
+  Soll die Ausgabe nicht in dem Pager enden, so genuegt es, an den Aufruf
+  von enver die Zeichenkette "| cat" anzuhängen. Beispielsweise:
 
 	enver -V walk | cat

@@ -1,3 +1,4 @@
+
 ========================== README.enver.txt ==============================
 
 Wozu soll man sich, fragt sich mancher Linuxneuling sicherlich, in
@@ -35,6 +36,7 @@ veroeffentlicht.
 
 Bernd Storck, Berlin am 20. Februar 2018
 
+
 EINSATZVORBEREITUNGEN
 
 DER DATENBESTAND, DIE DATEI "dictverbs.txt" IST URHEBERRECHTICH GESCHUETZT,
@@ -66,6 +68,6 @@ Sie heruntergeladen haben.  Beispielsweise:
 
 $ ./mkbase.sh cmcskfksrtk-9123454237-e9oi3u.zip
 
-Am Ende sollten Die Skriptdatei "enver" und eine Datei namens "dictverbs.txt" 
+Am Ende sollten die Skriptdatei "enver" und eine Datei namens "dictverbs.txt" 
 gemeinsam in einem Verzeichnis liegen, das möglichst in den Suchpfad ihres
 Linux-Systems eingetragen sein sollte.
