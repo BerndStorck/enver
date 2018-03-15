@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# enver 2.0
+# enver 2.0.1
 #
 # Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -78,8 +78,8 @@ function print_all() {
 
 function phrases() {
 	local searched="$1"
-	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
-	sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^	]*\<$searched\>.*	" | \
+	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary"  | \
+	sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^$Tab]*\<$searched\>.*$Tab" | \
 	grep --color=always -wi "$searched" | tr "\t" "#" | column -s"#" -t
 }
 
@@ -87,7 +87,7 @@ function write_amount_of_phrases() {
 
 	local searched="$1"
 	local amount_of_phrases=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
-	grep -c -iE "^[[:blank:]]*[^	]*\<$searched\>.*	")
+	grep -c -iE "^[[:blank:]]*[^$Tab]*\<$searched\>.*$Tab")
 
 	if [ "$amount_of_phrases" -gt 0 ]; then
 
@@ -105,7 +105,7 @@ function write_amount_of_phrases() {
 function write_total_amount() {
 
 	local searched="$1"
-	local amount=$(grep -c -E "^[[:blank:]]*(to )\<$searched\>.*	" "$vocabulary")
+	local amount=$(grep -c -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary")
 
 	if [ "$amount" -gt 0 ]; then
 
