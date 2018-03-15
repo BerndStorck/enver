@@ -1,0 +1,181 @@
+#! /bin/bash
+#
+# enver 1.3.2
+#
+# Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
+#
+# Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
+#
+# Stand: 2018-03-02
+# Autor: Bernd Storck
+#
+# Veroeffentlicht auf "https://www.facebook.com/BStLinux/"
+#
+
+script_name="enver"
+vocabulary="dictverbs.txt"
+
+function default_output() {
+	local searched="$1"
+	grep -P "^[[:blank:]]*(to )\b$searched\b\t" "$vocabulary" | tr "\t" "#" | column -s"#" -t
+	return "$(grep -c -P "^[[:blank:]]*(to )\b$searched\b\t" "$vocabulary")"
+
+}
+
+function print_all_verbs() {
+	local searched="$1"
+	local counter
+	# grep -P "^[[:blank:]]*(to )\b$searched\b.*\t" "$vocabulary" | tr "\t" "#" | column -s"#" -t
+	grep -P "^[[:blank:]]*(to )\b$searched\b.*\t" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
+	if test -s /tmp/enver.tmp; then
+		counter="$(wc -l '/tmp/enver.tmp' | cut -d" " -f1)" 
+		if [[ "$counter" -gt 24 ]]; then
+			less -S /tmp/enver.tmp
+		else
+			cat /tmp/enver.tmp
+		fi
+	else
+		echo "Kein Datensatz, keine Erklärung zu \"$searched\" gefunden."
+	fi
+	rm -f /tmp/enver.tmp
+}
+
+function phrases() {
+	local searched="$1"
+	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
+	sed "s/\[Redewendung\]//" | grep -iP "^[[:blank:]]*[^\t]*\b$searched\b.*\t" | \
+	grep --color=always -wi "$searched" | tr "\t" "#" | column -s"#" -t
+}
+
+function write_amount_of_phrases() {
+
+	local searched="$1"
+	local amount_of_phrases=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
+	grep -c -iP "^[[:blank:]]*[^\t]*\b$searched\b.*\t")
+
+	if [ "$amount_of_phrases" -gt 0 ]; then
+
+		echo -n "\"$script_name -P $searched\" liefert $amount_of_phrases " > /dev/stderr
+		if [ "$amount_of_phrases" -gt 1 ]; then
+			local object_name="Datensätze"
+		else
+			local object_name="Datensatz"
+		fi
+		echo "$object_name." > /dev/stderr
+	
+	fi
+}
+
+function write_total_amount() {
+
+	local searched="$1"
+	local amount=$(grep -c -P "^[[:blank:]]*(to )\b$searched\b.*\t" "$vocabulary")
+
+	if [ "$amount" -gt 0 ]; then
+
+		echo -n -e  "\n\"$script_name -V $searched\" liefert $amount " > /dev/stderr
+		if [ "$amount" -gt 1 ]; then
+			local object_name="Datensätze"
+		else
+			local object_name="Datensatz"
+		fi
+		echo "$object_name." > /dev/stderr
+	
+	fi
+}
+
+
+display_help_screen() {
+ 	echo "$script_name"
+	echo -e "\t\"$script_name\" zeigt Übersetzungen englischer Vokabeln ins Deutsche an."
+	echo -e "\nAUFRUFFORMAT:"
+	echo -e "\t$script_name [-v|-s|-c|-h] VOKABEL"
+	echo -e "\nBEISPIELE:"
+	echo -e "\t$script_name -v translate"
+	echo -e "\t$script_name translate"
+	echo -e "\n\t(Beiden Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)"
+	echo -e "\nAUFRUFPARAMETER:";
+	echo -e "\t-v\tLiefert eine kurze Auskunft über ein englisches Verb."
+	echo -e "\t-V\tSucht nur nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
+	echo -e "\t-D\tSucht von einem deutschen Wort aus nach nach englischen Verben."
+	echo -e "\t-P\tListet Redewendungen (engl. \"phrases\") und Sätze auf, in denen die Zeichenkette vorkommt."
+	echo -e "\t-p\tKombiniert \"-v\" (kurze Auskunft) mit \"-P\" (Liste von Redewendungen)."
+	echo -e "\t-f\tListet alle Datensätzen auf, die im englischen Text die gesuchte Zeichenkette enthalten."
+	echo -e "\t-a\tListet wie \"-f\", aber ohne farbliche Hervorhebung."
+	echo -e "\t-h\tZeigt diese Hilfeseite an."
+	echo -e "\nALTERNATIVE SPRECHENDE AUFRUFPARAMETER:";
+	echo -e "\t-v \t--verb"
+	echo -e "\t-V \t--verbs"
+	echo -e "\t-D \t--deutsch, --de-en"
+	echo -e "\t-P \t--phrases"
+	echo -e "\t-p \t--phrases-too"
+	echo -e "\t-f \t--full"
+	echo -e "\t-a \t--all, --alle, --alles"
+	echo -e "\t-h \t--help"
+}
+
+
+case $1 in
+
+  -V|--verbs)
+	# Long list about the searched verb:
+	# grep -P "^[[:blank:]]*(to )\b$2\b.*\t" "$vocabulary" | tr "\t" "#" | column -s"#" -t
+	print_all_verbs "$2"
+	;;
+
+  -v|--verb)
+	# "Short list, simple info about a verb:
+	default_output "$2"
+	if [ $? -ne 0 ]; then
+		write_total_amount "$2"
+		write_amount_of_phrases "$2"
+	else  # if "enver -v" does not succeed, automatically execute "enver -V":
+		print_all_verbs "$2"
+	fi
+	;;
+
+  -g|-d|-G|-D|--de-en|--german|--deutsch)
+	# Find a verb to a german word:
+	grep -P "^[[:blank:]]*(to ).*\t.*\b$2\b" "$vocabulary" | tr "\t" "#" | column -s"#" -t
+	;;
+
+  -p|--phrases-too|phrases_too)
+	# Find also phrases, combines "-v" with "-P":
+	default_output "$2"
+	echo
+	phrases "$2"
+	write_total_amount "$2"
+	;;
+
+  -P|--phrases)
+	# Find and write only phrases:
+	phrases "$2"
+	;;
+
+  -f|--full)
+	grep -P "^[^#][^\t]+([^\[][^\[\]]*)$2.*[^\]][^\t]*\t" "$vocabulary" | \
+	grep --color=always "$2"  
+	;;
+
+  -a|--all|--alle|--alles)
+	grep --color=never -P "^[^#][^\t]+$2[^\t]*\t" "$vocabulary" 
+	;;
+
+  -h|--help)
+	display_help_screen
+	;;
+
+  *)
+	# Short list, simple info about a verb, same action as with "-v":
+	default_output "$1"
+	if [ $? -ne 0 ]; then
+		write_total_amount "$1"
+		write_amount_of_phrases "$1"
+	else  # if "enver -v" does not succeed, automatically execute "enver -V":
+		print_all_verbs "$1"
+	fi
+	;;
+
+esac
+
+
