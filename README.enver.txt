@@ -25,23 +25,25 @@ nicht nur nach eindeutig bekannten Zeichenfolgen suchen kann, sondern nach
 Suchmustern, also beispielsweise nach allen Zeichenfolgen, welche die Form
 einer E-Mail-Adresse oder einer Telefonnummer oder einer Website-Adresse
 haben. Solche Suchmuster nennen Programmierer "reguläre Ausdrücke" oder 
-"regex" für das Englische "regular expression"
+"regex" für das englische "regular expression".
 
 Linguistische Perfektion habe ich nicht angestrebt.  Ich hoffe trotzdem,
-dass mein Shell-Skript Euch oder Euren Kindern helfen wird, ein englisches
+dass mein Shell-Skript Ihnen oder Ihren Kindern helfen wird, ein englisches
 Verb bei Gelegenheit schnell erklärt zu bekommen.
 
-"enver 1.0" habe ich im Februar 2018 auf "https://www.facebook.com/BStLinux/" 
-veroeffentlicht.
+"enver 1.0" habe ich im Februar 2018 via "https://www.facebook.com/BStLinux/" 
+veröffentlicht, Version 2.0.1 im März 2018 auf GitHub unter der Adresse 
+"https://github.com/BerndStorck/enver".
 
-Bernd Storck, Berlin am 20. Februar 2018
+Bernd Storck, Berlin am 16. März 2018
 
 
 EINSATZVORBEREITUNGEN
 
-DER DATENBESTAND, DIE DATEI "dictverbs.txt" IST URHEBERRECHTICH GESCHUETZT,
-es handelt sich um einen geringfuegig vereinfachten Auszug aus einer
-Woerterbuchdatei von dict.cc.
+DER DATENBESTAND, DIE DATEI "dictverbs.txt" IST URHEBERRECHTICH GESCHUETZT!
+
+Diese Datei ist ein geringfuegig vereinfachter Auszug aus einer Woerterbuch-
+datei von dict.cc.  Alle Rechte an den Woe[Brterbuchdaten liegen bei dict.cc.
 
 1.  Damit die Datei "dictverbs.txt" auf Ihrem Rechner generiert wird,
 muessen Sie zuerst die Woerterbuchdatei von "dict.cc" herunterladen.  
@@ -55,13 +57,13 @@ Laden Sie von dort die Datei "EN -> DE" (tab-delimited, UTF-8)" herunter!
 mit dem die Archivdatei entpackt wird, die Sie von dict.cc bekommen haben,
 mit dem Kommando:
 
-# apt install unzip
+  # apt install unzip
 
 oder:
 
-$ sudo apt-get -y install unzip
+  $ sudo apt-get -y install unzip
 
-3.  Das Skript "mkbase.sh" kann fuer Sie die Archivdatei entpacken und die
+3.  Das Skript "mkbase.sh" kann für Sie die Archivdatei entpacken und die
 gekürzte und vereinfachte Datendatei zu erzeugen, mit der das Skript "enver"
 arbeitet.  Starten Sie dazu das Skript mit dem Namen der Archivdatei, die
 Sie heruntergeladen haben.  Beispielsweise:
