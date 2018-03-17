@@ -50,9 +50,7 @@ function print_all_verbs() {
 
 function print_verbs_full() {
 	# Finds the searched string if it is in the english field even if it's only
-	# a part of a word. But it ignores the occurence of the string in the annotations
-	# or tags at the end of the english field. Those annotations are written between
-	# squared brackets "[anntotation or tag]".
+	# a part of a word. 
 	#
 	# In opposite to the function "print_full", this function looks only for lines,
 	# which are beginning with "to " followed by a word containing the search string.
