@@ -20,13 +20,13 @@ AUSFÜHRLICHERE SUCHE (enver -V)
   dann kann der Aufruf "enver -V SUCHWORT" benutzt werden. "enver -V"
   liefert die Datensätze, die auch "enver -v" findet und, wenn vorhanden,
   zustätzliche passende Datensätze. Außerdem unternimmt das Programm,
-  wenn es mit der Option "-V" aufgerufen wird, bis drei verschiedenartige
+  wenn es mit der Option "-V" aufgerufen wird, bis vier verschiedenartige
   Versuche, die übergebene Zeichenkette in der Datenbasis zu finden, um,
   soweit irgend möglich, eine Auskunft über die gesuchte Zeichenkette zu
   finden. Wenn "enver -V" keinen passenden Datensatz zum Suchwort findet,
   dann kommt dieses Suchwort im englischen Teil der Datenbasis nicht vor.
 
-  Das Programm kommentiert jede erfolglose Suche über den
+  Das Programm kommentiert erfolglose Suchschritte über den
   Standardfehlerkanal. Diese Rückmeldungen werden unterdrückt, wenn man
   das Programm wie folgt aufruft:
 
