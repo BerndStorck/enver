@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# enver 2.0.1
+# enver 2.1.0
 #
 # Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 # Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-# Stand: 2018-03-15
+# Stand: 2018-03-17
 # Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
@@ -18,8 +18,6 @@ Tab="	"
 
 function default_output() {
 	local searched="$1"
-	# grep -P "^[[:blank:]]*(to )\b$searched\b\t" "$vocabulary" | tr "\t" "#" | column -s"#" -t
-	# return "$(grep -c -P "^[[:blank:]]*(to )\b$searched\b\t" "$vocabulary")"
 	grep -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t
 	return "$(grep -c -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary")"
 
@@ -50,44 +48,55 @@ function print_all_verbs() {
 	return $counter
 }
 
+function print_verbs_full() {
+	# Finds the searched string if it is in the english field even if it's only
+	# a part of a word. But it ignores the occurence of the string in the annotations
+	# or tags at the end of the english field. Those annotations are written between
+	# squared brackets "[anntotation or tag]".
+	#
+	# In opposite to the function "print_full", this function looks only for lines,
+	# which are beginning with "to " followed by a word containing the search string.
+	local searched="$1"
+        grep "^[^#]" "$vocabulary" | grep -E "^to +[[:alpha:]]*$1" | grep -F --color=always "$1"
+	return $?
+}
+
 function print_full() {
-	# The following search string contains three tab characters between the first
-	# pair of quotation marks!  With a perl expression the following would be:
-	# grep -P "^[^#][^\t]+([^\[][^\[\]]*)$2.*[^\]][^\t]*\t" "$vocabulary"
+	# Finds the searched string if it is in the english field even if it's only
+	# a part of a word. But it ignores the occurence of the string in the annotations
+	# or tags at the end of the english field. Those annotations are written between
+	# squared brackets "[anntotation or tag]".
 
 	local searched="$1"
-	# grep -E "^[^#][^$Tab]+([^\[][^\[\]]*)$1.*[^\]][^$Tab]*$Tab" "$vocabulary" | \
-	grep -E "^[^#\[][^$Tab\[]+([^\[][^\[\]]*)$1.*[^\]][^$Tab]*$Tab" "$vocabulary" | \
-	grep --color=always "$1"  
+        grep "^[^#]" "$vocabulary" | grep -E "^[^[$Tab]*$1" | grep -F --color=always "$1"
 	return $?
 }	
 
 function print_all() {
 	# Fields are separated by tabs.  First field is English, second German. 
-	# Finds all records/lines with the searched string in the first field, 
-	# even if it is a part of a word.  
+	# Finds all records/lines with the searched string in the first field, even
+	# if it is a part of a word or part of an annotation beween squared brackets.  
 	#
-	# As perl expression this would be: grep -P "^[^#][^\t]+$2[^\t]*\t" "$vocabulary"
-	#
-	# The following search string contains three tab characters between the first 
-	# pair of quotation marks!
+	# The second search string contains three tab characters between the pair of 
+	# quotation marks!
 	local searched="$1"
-	grep --color=always -E "^[^#][^$Tab]+$1[^$Tab]*$Tab" "$vocabulary" 
+	grep "^[^#]" "$vocabulary" | grep --color=always -E "^[^$Tab]*$1[^$Tab]*$Tab"
 	return "$?"
 }
 
 function phrases() {
 	local searched="$1"
-	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary"  | \
-	sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^$Tab]*\<$searched\>.*$Tab" | \
+	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
+	sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^	]*\<$searched\>.*	" | \
 	grep --color=always -wi "$searched" | tr "\t" "#" | column -s"#" -t
 }
 
 function write_amount_of_phrases() {
 
 	local searched="$1"
-	local amount_of_phrases=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
-	grep -c -iE "^[[:blank:]]*[^$Tab]*\<$searched\>.*$Tab")
+	local amount_of_phrases
+	amount_of_phrases=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
+	grep -c -iE "^[[:blank:]]*[^	]*\<$searched\>.*	")
 
 	if [ "$amount_of_phrases" -gt 0 ]; then
 
@@ -105,7 +114,8 @@ function write_amount_of_phrases() {
 function write_total_amount() {
 
 	local searched="$1"
-	local amount=$(grep -c -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary")
+	local amount
+	amount=$(grep -c -E "^[[:blank:]]*(to )\<$searched\>.*	" "$vocabulary")
 
 	if [ "$amount" -gt 0 ]; then
 
@@ -133,11 +143,11 @@ display_help_screen() {
 	echo -e "\nAUFRUFPARAMETER:";
 	echo -e "\t-v\tLiefert eine kurze Auskunft über ein englisches Verb."
 	echo -e "\t-V\tSucht nur nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
-	echo -e "\t-D\tSucht von einem deutschen Wort aus nach nach englischen Verben."
+	echo -e "\t-D\tSucht von einem deutschen Wort ausgehend nach englischen Verben."
 	echo -e "\t-P\tFindet Redewendungen (engl. \"phrases\") und Sätze mit der Zeichenkette."
 	echo -e "\t-p\tKombiniert \"-v\" (kurze Auskunft) mit \"-P\" (Liste von Redewendungen)."
-	echo -e "\t-f\tZeigt Datensätze mit der gesuchten Zeichenkette im englischen Text."
-	echo -e "\t-a\tZeigt alle Datensätze mit der gesuchten Zeichenkette im englischen Text."
+	echo -e "\t-f\tZeigt Datensätze mit der gesuchten Zeichenkette im englischen Vokabeltext."
+	echo -e "\t-a\tZeigt alle Datensätze mit der gesuchten Zeichenkette im englischen Datenfeld."
 	echo -e "\t-h\tZeigt diese Hilfeseite an."
 	echo -e "\nALTERNATIVE SPRECHENDE AUFRUFPARAMETER:";
 	echo -e "\t-v \t--verb"
@@ -161,15 +171,18 @@ case $1 in
 		echo
 		echo "Weitergehende Suche auch nach Wortteilen startet." > /dev/stderr
 		sleep .75
-		print_full "$2"
+		print_verbs_full "$2"
 		if [ "$?" -ne 0 ]; then
-			echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
-			echo
-			sleep .5
-			echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
-			print_all "$2"
+			print_full "$2"
 			if [ "$?" -ne 0 ]; then
-				echo "Die gesuchte Zeichenkette kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+				echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
+				echo
+				sleep .5
+				echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
+				print_all "$2"
+				if [ "$?" -ne 0 ]; then
+					echo "Die gesuchte Zeichenkette kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+				fi
 			fi
 		fi
 	fi
@@ -202,6 +215,12 @@ case $1 in
   -P|--phrases)
 	# Find and write only phrases:
 	phrases "$2"
+	;;
+
+  -pvf|--verbs-full)
+	# Only for testing purposes, call not mentioned in help documentation.
+	# Finds a string even if it is a part of a word, but only in words directly following "^to ".
+	print_verbs_full "$2"
 	;;
 
   -f|--full)
