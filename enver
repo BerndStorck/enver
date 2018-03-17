@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# enver 2.1.0
+# enver 2.1.1
 #
 # Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -57,7 +57,7 @@ function print_verbs_full() {
 	# In opposite to the function "print_full", this function looks only for lines,
 	# which are beginning with "to " followed by a word containing the search string.
 	local searched="$1"
-        grep "^[^#]" "$vocabulary" | grep -E "^to +[[:alpha:]]*$1" | grep -F --color=always "$1"
+        grep "^[^#]" "$vocabulary" | grep -iE "^to +[[:alpha:]]*$1" | grep -F --color=always "$1"
 	return $?
 }
 
@@ -68,7 +68,7 @@ function print_full() {
 	# squared brackets "[anntotation or tag]".
 
 	local searched="$1"
-        grep "^[^#]" "$vocabulary" | grep -E "^[^[$Tab]*$1" | grep -F --color=always "$1"
+        grep "^[^#]" "$vocabulary" | grep -iE "^[^[$Tab]*$1" | grep -F --color=always "$1"
 	return $?
 }	
 
@@ -80,7 +80,7 @@ function print_all() {
 	# The second search string contains three tab characters between the pair of 
 	# quotation marks!
 	local searched="$1"
-	grep "^[^#]" "$vocabulary" | grep --color=always -E "^[^$Tab]*$1[^$Tab]*$Tab"
+	grep "^[^#]" "$vocabulary" | grep --color=always -iE "^[^$Tab]*$1[^$Tab]*$Tab"
 	return "$?"
 }
 
