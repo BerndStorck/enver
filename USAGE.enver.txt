@@ -46,8 +46,8 @@ AUSFÜHRLICHERE SUCHE (enver -V)
 
 	enver -V SUCHWORT 2> /dev/null
 
-  Das Ergebnis des Aufrufs "enver -V ..." wird im Fall, dass mehr als
-  Ergebnisse gefunden werden, als das Terminal Zeilen hat, an einen Pager 
+  Das Ergebnis des Aufrufs "enver -V ..." wird im Fall, dass mehr Ergeb-
+  nisse gefunden werden, als das Terminal Zeilen hat, an einen Pager 
   weitergeleitet. enver versucht dazu, einen der Pager less, most oder 
   more aufzurufen, und zwar genau in dieser Reihenfolge.  Im Pager kann 
   man sich mit den Pfeiltasten bewegen. Beendet werden less und most 
