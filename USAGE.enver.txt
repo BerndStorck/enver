@@ -13,6 +13,20 @@ STANDARDMODUS (enver -v)
   startet enver im Standardmodus, der eine schnelle und kurze Antwort
   liefert.
 
+  Wenn "enver -v" keine passenden Datensätze findet, ermittelt das 
+  Programm automatisch, ob es auf andere Weise ungefähr passende
+  Datensätze finden kann, und weist auf diese Möglichkeit hin.
+
+
+ERWEITERTE, TIEFERE KASKADIERENDE SUCHE (enver -e)
+
+  War "enver SUCHWORT" oder "enver -v SUCHWORT" erfolglos, so können
+  möglicherweise durch den Aufruf "enver -e SUCHWORT" doch noch ungefähr
+  passende Datensätze gefunden werden. 
+
+  Der Aufruf von "enver -e" führt zu keinen weiteren Ergebnissen, wenn
+  der im Folgenden beschriebene Aufruf "enver -V" schon benutzt wurde.
+
 
 AUSFÜHRLICHERE SUCHE (enver -V)
 
