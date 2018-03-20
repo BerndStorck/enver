@@ -43,7 +43,7 @@ EINSATZVORBEREITUNGEN
 DER DATENBESTAND, DIE DATEI "dictverbs.txt" IST URHEBERRECHTICH GESCHUETZT!
 
 Diese Datei ist ein geringfuegig vereinfachter Auszug aus einer Woerterbuch-
-datei von dict.cc.  Alle Rechte an den Woe[Brterbuchdaten liegen bei dict.cc.
+datei von dict.cc.  Alle Rechte an den Woerterbuchdaten liegen bei dict.cc.
 
 1.  Damit die Datei "dictverbs.txt" auf Ihrem Rechner generiert wird,
 muessen Sie zuerst die Woerterbuchdatei von "dict.cc" herunterladen.  
