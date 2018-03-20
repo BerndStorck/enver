@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# enver 2.1.1
+# enver 2.2.0
 #
 # Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -13,6 +13,7 @@
 #
 
 script_name="enver"
+script_version="2.2.0"
 vocabulary="dictverbs.txt"
 Tab="	"
 
@@ -55,7 +56,7 @@ function print_verbs_full() {
 	# In opposite to the function "print_full", this function looks only for lines,
 	# which are beginning with "to " followed by a word containing the search string.
 	local searched="$1"
-        grep "^[^#]" "$vocabulary" | grep -iE "^to +[[:alpha:]]*$1" | grep -F --color=always "$1"
+        grep "^[^#]" "$vocabulary" | grep -iE "^to +([[:alpha:]]-?)*$1" | grep -F --color=always "$1"
 	return $?
 }
 
@@ -82,6 +83,29 @@ function print_all() {
 	return "$?"
 }
 
+function deep_search_cascade() {
+	# This extended search tries to find datasets by a cascade of three regular expressions, the
+	# cascade will be stopped if one regular expression has found matching datasets.
+
+	local searched="$1"
+	echo "Weitergehende Suche auch nach Wortteilen startet." > /dev/stderr
+	sleep .75
+	print_verbs_full "$1"
+	if [ "$?" -ne 0 ]; then
+		print_full "$1"
+		if [ "$?" -ne 0 ]; then
+			echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
+			echo
+			sleep .5
+			echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
+			print_all "$1"
+			if [ "$?" -ne 0 ]; then
+				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+			fi
+		fi
+	fi
+}
+
 function phrases() {
 	local searched="$1"
 	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
@@ -98,18 +122,18 @@ function write_amount_of_phrases() {
 
 	if [ "$amount_of_phrases" -gt 0 ]; then
 
-		echo -n "\"$script_name -P $searched\" liefert $amount_of_phrases " > /dev/stderr
 		if [ "$amount_of_phrases" -gt 1 ]; then
 			local object_name="Datensätze"
 		else
 			local object_name="Datensatz"
 		fi
-		echo "$object_name." > /dev/stderr
+		echo "\"$script_name -P $searched\" liefert $amount_of_phrases $object_name." > /dev/stderr
 	
 	fi
 }
 
 function write_total_amount() {
+	# Counts how many datasets the command "enver -V" finds.
 
 	local searched="$1"
 	local amount
@@ -117,29 +141,53 @@ function write_total_amount() {
 
 	if [ "$amount" -gt 0 ]; then
 
-		echo -n -e  "\n\"$script_name -V $searched\" liefert $amount " > /dev/stderr
 		if [ "$amount" -gt 1 ]; then
 			local object_name="Datensätze"
 		else
 			local object_name="Datensatz"
 		fi
-		echo "$object_name." > /dev/stderr
+		echo -e  "\n\"$script_name -V $searched\" liefert $amount $object_name." > /dev/stderr
 	
 	fi
 }
 
+function count_cascade() {
+	# Counts how many datasets will be found if calling the function "deep_search_cascade" for extended search.
+	#
+	# Extended search tries to find datasets by a cascade of three regular expressions, the
+	# cascade will be stopped if one regular expression has found matching datasets.
+
+	local searched="$1"
+	local amount
+        amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^to +([[:alpha:]]-?)*$1") # Counts print_verbs_full().
+	if [ "$amount" -eq 0 ]; then
+        	amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^[^[$Tab]*$1") # Counts print_full().
+		if [ "$amount" -eq 0 ]; then  # Count print_all():
+			amount=$(grep "^[^#]" "$vocabulary" | grep --color=always -ciE "^[^$Tab]*$1[^$Tab]*$Tab")
+		fi
+	fi
+	if [ "$amount" -gt 1 ]; then 
+		echo -e "\nDie vertiefte Suche mit \"$script_name -e $searched\" findet $amount Datensätze."
+	elif [ "$amount" -eq 1 ]; then
+		echo -e "\nDie vertiefte Suche mit \"$script_name -e $searched\" findet einen Datensatz."
+	else
+		echo "Die Wörterbuchdatei enthält keinen Datensatz mit der Zeichenkette \"$searched\" in Englisch."
+	fi
+	return "$amount"
+}
 
 display_help_screen() {
- 	echo "$script_name"
+ 	echo "$script_name $script_version"
 	echo -e "\t\"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an."
 	echo -e "\nAUFRUFFORMAT:"
-	echo -e "\t$script_name [-v|-V|-D|-P|-p|-f|-a|-h] VOKABEL"
+	echo -e "\t$script_name [-v|-V|-e|-D|-P|-p|-f|-a|-h] VOKABEL"
 	echo -e "\nBEISPIELE:"
 	echo -e "\t$script_name -v translate"
 	echo -e "\t$script_name translate"
 	echo -e "\n\t(Beiden Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)"
 	echo -e "\nAUFRUFPARAMETER:";
-	echo -e "\t-v\tLiefert eine kurze Auskunft über ein englisches Verb."
+	echo -e "\t-v\tGibt schnell eine kurze Auskunft über ein englisches Verb."
+	echo -e "\t-e\tKann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war."
 	echo -e "\t-V\tSucht nur nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
 	echo -e "\t-D\tSucht von einem deutschen Wort ausgehend nach englischen Verben."
 	echo -e "\t-P\tFindet Redewendungen (engl. \"phrases\") und Sätze mit der Zeichenkette."
@@ -149,6 +197,7 @@ display_help_screen() {
 	echo -e "\t-h\tZeigt diese Hilfeseite an."
 	echo -e "\nALTERNATIVE SPRECHENDE AUFRUFPARAMETER:";
 	echo -e "\t-v \t--verb"
+	echo -e "\t-e \t--weiter, --erweitere, --extend, --deep-search"
 	echo -e "\t-V \t--verbs"
 	echo -e "\t-D \t--deutsch, --de-en"
 	echo -e "\t-P \t--phrases"
@@ -160,6 +209,20 @@ display_help_screen() {
 
 
 case $1 in
+
+  -v|--verb)
+	# "Short list, simple info about a verb:
+	default_output "$2"
+	if [ $? -ne 0 ]; then
+		write_total_amount "$2"
+		write_amount_of_phrases "$2"
+	else  # if "enver -v" does not succeed, automatically execute the basic function of "enver -V":
+		print_all_verbs "$2" # print_all_verbs returns the number of found datasets. 0 means no success.
+		if [ "$?" -eq 0 ]; then  
+			count_cascade "$2"
+		fi
+	fi
+	;;
 
   -V|--verbs)
 	# Long list about the searched verb:
@@ -186,15 +249,10 @@ case $1 in
 	fi
 	;;
 
-  -v|--verb)
-	# "Short list, simple info about a verb:
-	default_output "$2"
-	if [ $? -ne 0 ]; then
-		write_total_amount "$2"
-		write_amount_of_phrases "$2"
-	else  # if "enver -v" does not succeed, automatically execute "enver -V":
-		print_all_verbs "$2"
-	fi
+  -e|-E|--weiter|--erweitere|--extend|--deep-search|--deep_search|--deep)
+	# Start der Suchkaskade, die stufenweise bis drei verschiedene reguläre Ausdrücke benutzt, 
+    	# um irgendwelche passenden Datensätze zur gesuchten Zeichenkette zu finden.
+	deep_search_cascade "$2"
 	;;
 
   -g|-d|-G|-D|--de-en|--german|--deutsch)
@@ -202,7 +260,7 @@ case $1 in
 	grep -E "^[[:blank:]]*(to ).*$Tab.*\<$2\>" "$vocabulary" | tr "\t" "#" | column -s"#" -t
 	;;
 
-  -p|--phrases-too|phrases_too)
+  -p|--phrases-too|--phrases_too|-Pv|-vP)
 	# Find also phrases, combines "-v" with "-P":
 	default_output "$2"
 	echo
@@ -241,8 +299,11 @@ case $1 in
 	if [ $? -ne 0 ]; then
 		write_total_amount "$1"
 		write_amount_of_phrases "$1"
-	else  # if "enver -v" does not succeed, automatically execute "enver -V":
-		print_all_verbs "$1"
+	else  # if "enver -v" does not succeed, automatically execute the basic function of "enver -V":
+		print_all_verbs "$1" # print_all_verbs returns the number of found datasets. 0 means no success.
+		if [ "$?" -eq 0 ]; then  
+			count_cascade "$1"
+		fi
 	fi
 	;;
 
