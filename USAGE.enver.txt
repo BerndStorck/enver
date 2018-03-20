@@ -47,11 +47,11 @@ AUSFÜHRLICHERE SUCHE (enver -V)
 	enver -V SUCHWORT 2> /dev/null
 
   Das Ergebnis des Aufrufs "enver -V ..." wird im Fall, dass mehr als
-  24 Ergebnisse gefunden werden, an einen Pager weitergeleitet. enver 
-  versucht dazu einen der Pager less, most oder more aufzurufen, und zwar
-  genau in dieser Reihenfolge.  Im Pager kann man sich mit den Pfeil-
-  tasten bewegen. Beendet werden less und most durch die Taste q (wie 
-  "quit", "beenden").
+  Ergebnisse gefunden werden, als das Terminal Zeilen hat, an einen Pager 
+  weitergeleitet. enver versucht dazu, einen der Pager less, most oder 
+  more aufzurufen, und zwar genau in dieser Reihenfolge.  Im Pager kann 
+  man sich mit den Pfeiltasten bewegen. Beendet werden less und most 
+  durch die Taste q (wie "quit", "beenden").
 
   Soll die Ausgabe nicht in dem Pager enden, so genügt es, an den Aufruf
   von enver die Zeichenkette "| cat" anzuhängen. Beispielsweise:

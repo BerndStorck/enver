@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# enver 2.2.0
+# enver 2.2.1
 #
 # Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -30,7 +30,7 @@ function print_all_verbs() {
 	grep -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
 	if test -s /tmp/enver.tmp; then
 		counter="$(wc -l '/tmp/enver.tmp' | cut -d" " -f1)" 
-		if [[ "$counter" -gt 24 ]]; then
+		if [[ "$counter" -gt $(tput lines) ]]; then
 			if [ "$(which less)" ]; then
 				less -S /tmp/enver.tmp
 			elif [ "$(which most)" ]; then
@@ -152,14 +152,14 @@ function write_total_amount() {
 }
 
 function count_cascade() {
-	# Counts how many datasets will be found if calling the function "deep_search_cascade" for extended search.
+	# Counts how many datasets the function "deep_search_cascade" for extended search finds.
 	#
 	# Extended search tries to find datasets by a cascade of three regular expressions, the
 	# cascade will be stopped if one regular expression has found matching datasets.
 
 	local searched="$1"
 	local amount
-        amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^to +([[:alpha:]]-?)*$1") # Counts print_verbs_full().
+	amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^to +([[:alpha:]]-?)*$1") # Counts print_verbs_full().
 	if [ "$amount" -eq 0 ]; then
         	amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^[^[$Tab]*$1") # Counts print_full().
 		if [ "$amount" -eq 0 ]; then  # Count print_all():
@@ -180,7 +180,7 @@ display_help_screen() {
  	echo "$script_name $script_version"
 	echo -e "\t\"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an."
 	echo -e "\nAUFRUFFORMAT:"
-	echo -e "\t$script_name [-v|-V|-e|-D|-P|-p|-f|-a|-h] VOKABEL"
+	echo -e "\t$script_name [-v|-e|-V|-D|-P|-p|-f|-a|-h] VOKABEL"
 	echo -e "\nBEISPIELE:"
 	echo -e "\t$script_name -v translate"
 	echo -e "\t$script_name translate"
@@ -188,7 +188,7 @@ display_help_screen() {
 	echo -e "\nAUFRUFPARAMETER:";
 	echo -e "\t-v\tGibt schnell eine kurze Auskunft über ein englisches Verb."
 	echo -e "\t-e\tKann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war."
-	echo -e "\t-V\tSucht nur nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
+	echo -e "\t-V\tSucht gründlich nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
 	echo -e "\t-D\tSucht von einem deutschen Wort ausgehend nach englischen Verben."
 	echo -e "\t-P\tFindet Redewendungen (engl. \"phrases\") und Sätze mit der Zeichenkette."
 	echo -e "\t-p\tKombiniert \"-v\" (kurze Auskunft) mit \"-P\" (Liste von Redewendungen)."
