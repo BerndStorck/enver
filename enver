@@ -1,19 +1,19 @@
 #!/bin/bash
 #
-# enver 2.2.1
+# enver 2.2.2
 #
 # Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 # Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-# Stand: 2018-03-17
+# Stand: 2018-06-06
 # Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
 #
 
 script_name="enver"
-script_version="2.2.0"
+script_version="2.2.2[A"
 vocabulary="dictverbs.txt"
 Tab="	"
 
@@ -184,7 +184,7 @@ display_help_screen() {
 	echo -e "\nBEISPIELE:"
 	echo -e "\t$script_name -v translate"
 	echo -e "\t$script_name translate"
-	echo -e "\n\t(Beiden Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)"
+	echo -e "\n\t(Beide Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)"
 	echo -e "\nAUFRUFPARAMETER:";
 	echo -e "\t-v\tGibt schnell eine kurze Auskunft über ein englisches Verb."
 	echo -e "\t-e\tKann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war."
