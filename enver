@@ -6,14 +6,14 @@
 #
 # Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-# Stand: 2018-06-06
+# Stand: 2018-06-14
 # Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
 #
 
 script_name="enver"
-script_version="2.2.2[A"
+script_version="2.2.2"
 vocabulary="dictverbs.txt"
 Tab="	"
 
