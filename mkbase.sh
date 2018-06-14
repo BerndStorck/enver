@@ -33,7 +33,7 @@ if [ "$1" ]; then
 	esac
 
 else
-	dict_archive="$(la -1 cmc*.zip)"
+	dict_archive="$(ls -A1 cmc*.zip)"
 
 fi 
 
@@ -48,7 +48,7 @@ if [ "$dict_archive" ]; then
 
 	else
 	
-		inputfile=$(echo "$1" | sed "s/.zip/.txt/")
+		inputfile=$(sed "s/.zip/.txt/" <<< "$1")
 
 		if [ "$inputfile" ]; then
 
