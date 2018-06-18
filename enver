@@ -1,12 +1,12 @@
 #! /bin/bash 
 #
-#  enver 2.2.2
+#  enver 2.3.0
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 #  Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-#  Stand: 2018-06-14
+#  Stand: 2018-06-18
 #  Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
