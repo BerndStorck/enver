@@ -28,12 +28,11 @@ function display_page_by_page() {
 	TERMINAL_HEIGHT=$(stty size | cut -d" " -f1)
 	INPUTFILE="$1"
 	AMOUNT_OF_LINES="$(wc -l < "$1")" 
-  CMD="cat" 
+	CMD="cat" 
 
 	if [[ "$AMOUNT_OF_LINES" -gt $(( TERMINAL_HEIGHT - 1 )) ]]; then
 		for i in less most more pg
 		do
-		  echo "$i"
 			if [ "$(which ${i})" ]; then
 				case "$i" in
 				  less)
