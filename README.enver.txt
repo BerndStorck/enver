@@ -75,10 +75,14 @@ gemeinsam in einem Verzeichnis liegen, das möglichst in den Suchpfad ihres
 Linux-Systems eingetragen sein sollte.
 
 
-NOTWENDIGE PROGRAMME
+NOTWENDIGE PAKETE
 
-enver greift auf das Programm columns aus dem Paket "bsdmainutils" zurück. 
-Die bsdmainutils müssen daher installiert sein.
+Folgende Pakete müssen installiert sein. In Klammern steht das Programm aus
+dem jeweiligen Paket, das enver benötigt.
+
+ - bsdmainutils 	(columns)
+ - ncurses-bin 		(tput)
+ - coreutils 		(stty)
 
 
 EMPFOHLENE ZUSATZPROGRAMME
