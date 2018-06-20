@@ -6,14 +6,14 @@
 #
 #  Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-#  Stand: 2018-06-18
+#  Stand: 2018-06-20
 #  Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
 #
 
 script_name="enver"
-script_version="2.2.2"
+script_version="2.3.0"
 vocabulary="$(dirname $(which enver))/dictverbs.txt"
 Tab="	"
 
@@ -56,7 +56,7 @@ function print_verbs_full() {
 	# In opposite to the function "print_full", this function looks only for lines,
 	# which are beginning with "to " followed by a word containing the search string.
 	local searched="$1"
-        grep "^[^#]" "$vocabulary" | grep -iE "^to +([[:alpha:]]-?)*$1" | grep -F --color=always "$1"
+        grep -iE "^to +([[:alpha:]]-?)*$1" "$vocabulary"| grep -F --color=always "$1"
 	return $?
 }
 
@@ -67,7 +67,7 @@ function print_full() {
 	# squared brackets "[anntotation or tag]".
 
 	local searched="$1"
-        grep "^[^#]" "$vocabulary" | grep -iE "^[^[$Tab]*$1" | grep -F --color=always "$1"
+        grep -iE "^[^[$Tab]*$1" "$vocabulary" | grep -F --color=always "$1"
 	return $?
 }	
 
@@ -79,7 +79,7 @@ function print_all() {
 	# The second search string contains three tab characters between the pair of 
 	# quotation marks!
 	local searched="$1"
-	grep "^[^#]" "$vocabulary" | grep --color=always -iE "^[^$Tab]*$1[^$Tab]*$Tab"
+	grep --color=always -iE "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary"
 	return "$?"
 }
 
@@ -159,11 +159,11 @@ function count_cascade() {
 
 	local searched="$1"
 	local amount
-	amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^to +([[:alpha:]]-?)*$1") # Counts print_verbs_full().
+	amount=$(grep -ciE "^to +([[:alpha:]]-?)*$1" "$vocabulary") # Counts print_verbs_full().
 	if [ "$amount" -eq 0 ]; then
-        	amount=$(grep "^[^#]" "$vocabulary" | grep -ciE "^[^[$Tab]*$1") # Counts print_full().
+        	amount=$(grep -ciE "^[^[$Tab]*$1" "$vocabulary") # Counts print_full().
 		if [ "$amount" -eq 0 ]; then  # Count print_all():
-			amount=$(grep "^[^#]" "$vocabulary" | grep --color=always -ciE "^[^$Tab]*$1[^$Tab]*$Tab")
+			amount=$(grep --color=always -ciE "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary")
 		fi
 	fi
 	if [ "$amount" -gt 1 ]; then 
