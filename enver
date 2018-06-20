@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-#  enver 2.3.0
+#  enver 3.0.0
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -13,9 +13,43 @@
 #
 
 script_name="enver"
-script_version="2.3.0"
-vocabulary="$(dirname $(which enver))/dictverbs.txt"
+script_version="3.0.0"
+vocabulary="$(dirname "$(which enver)")/dictverbs.txt"
 Tab="	"
+
+
+function display_page_by_page() {
+
+	local TERMINAL_HEIGHT
+	local INPUTFILE
+	local AMOUNT_OF_LINES
+	local CMD
+
+	TERMINAL_HEIGHT=$(stty size | cut -d" " -f1)
+	INPUTFILE="$1"
+	AMOUNT_OF_LINES="$(wc -l < "$1")" 
+  CMD="cat" 
+
+	if [[ "$AMOUNT_OF_LINES" -gt $(( TERMINAL_HEIGHT - 1 )) ]]; then
+		for i in less most more pg
+		do
+		  echo "$i"
+			if [ "$(which ${i})" ]; then
+				case "$i" in
+				  less)
+						CMD="less -S"
+						;;
+				  *)
+						CMD="${i}"
+						;;
+				esac
+				break 
+			fi
+		done
+	fi
+
+	eval "${CMD} $INPUTFILE"
+}
 
 function default_output() {
 	local searched="$1"
@@ -101,6 +135,14 @@ function deep_search_cascade() {
 			print_all "$1"
 			if [ "$?" -ne 0 ]; then
 				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+				echo "Versuch einer fehlertoleranten Suche startet." > /dev/stderr
+				if [ $(which agrep) ]; then
+					agrep -2 "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+					display_page_by_page "/tmp/enver.tmp"
+					if [ "$?" -ne 0 ]; then
+						echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
+					fi
+				fi
 			fi
 		fi
 	fi
@@ -309,4 +351,5 @@ case $1 in
 
 esac
 
+exit 0
 
