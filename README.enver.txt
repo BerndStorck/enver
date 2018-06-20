@@ -73,3 +73,16 @@ $ ./mkbase.sh cmcskfksrtk-9123454237-e9oi3u.zip
 Am Ende sollten die Skriptdatei "enver" und eine Datei namens "dictverbs.txt" 
 gemeinsam in einem Verzeichnis liegen, das möglichst in den Suchpfad ihres
 Linux-Systems eingetragen sein sollte.
+
+
+NOTWENDIGE PROGRAMME
+
+enver greift auf das Programm columns aus dem Paket "bsdmainutils" zurück. 
+Die bsdmainutils müssen daher installiert sein.
+
+
+EMPFOHLENE ZUSATZPROGRAMME
+
+Für eine fehlertolerante Suche verwendet enver das Programm "agrep" aus dem 
+Paket "glimpse". Wenn agrep von enver nicht gefunden wird, unterbleibt die
+fehlertolerante Suche. Ich empfehle das Paket "glimpse" zu installieren.
