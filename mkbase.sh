@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# mkbase.sh
+# mkbase.sh 1.1.0
 #
 # Erzeugt eine vereinfachte, kuerzere Datendatei aus der Woerterbuchdatei von dict.cc.
 # 
@@ -53,7 +53,7 @@ if [ "$dict_archive" ]; then
 		if [ "$inputfile" ]; then
 
 			grep --color=never -E "[[:blank:]]verb$" "$inputfile" | \
-			cut -f1,2 > dictverbs.txt
+			cut -f1,2 | grep "^[^#]" > dictverbs.txt
 
 			echo -e "\nDIE VOKABELDATEI IST URHEBERRECHTLICH GESCHUETZT, DARF NUR PRIVAT GENUTZT WERDEN:\n"
 			head -n12 "$inputfile" | grep '^#'
