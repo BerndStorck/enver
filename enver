@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-#  enver 3.1.0
+#  enver 3.2.0
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -14,7 +14,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.1.0"
+script_version="3.2.0"
 Tab="	"
 
 
@@ -24,8 +24,8 @@ LINECOUNTER="none"
 
 # Current Dynamic Values:
 vocabulary="$(dirname "$(which enver)")/dictverbs.txt"
+# vocabulary="$(dirname "$(which enver)")/cmcgnoosos-916510172-e6o859.txt"
 nDATASETS=$(wc -l < "$vocabulary")
-# AMOUNT_OF_LINES
 
 for i in tput stty
 do
@@ -65,6 +65,7 @@ function display_page_by_page() {
 	get_terminal_height   # sets the value of the script global var TERMINAL_HEIGHT.
 
 	if [[ "$AMOUNT_OF_LINES" -gt $(( TERMINAL_HEIGHT - 1 )) ]]; then
+		# Defines the pager program to use: 
 		for i in less most more pg
 		do
 			if [ "$(which ${i})" ]; then
@@ -81,7 +82,7 @@ function display_page_by_page() {
 		done
 	fi
 
-	eval "${CMD} $INPUTFILE"
+	eval "${CMD} $INPUTFILE"  # Calls pager or cat for displaying the file with the resulting data sets.
 }
 
 
@@ -144,6 +145,28 @@ function print_all() {
 	return "$?"
 }
 
+
+function approximate_search() {
+
+		local SEARCHED="$1"
+
+		echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
+		if [ $(which agrep) ]; then
+			agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+			if [ "$?" -eq 0 ]; then
+				echo
+				display_page_by_page "/tmp/enver.tmp"
+			else
+				echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
+			fi
+		else
+				echo "FEHLER: Das Programm \"agrep\" wurde nicht gefunden."
+				echo -e "\nFür eine ungefähre, fehlertolerante Suche muss agrep vorhanden sein."
+				echo "agrep bekommen Sie, wenn Sie das Paket \"glimpse\" installieren."
+		fi
+}		
+
+
 function deep_search_cascade() {
 	# This extended search tries to find datasets by a cascade of three regular expressions, the
 	# cascade will be stopped if one regular expression has found matching datasets.
@@ -162,28 +185,43 @@ function deep_search_cascade() {
 			print_all "$1"
 			if [ "$?" -ne 0 ]; then
 				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
-				echo
-				echo "Versuch einer fehlertoleranten Suche startet." > /dev/stderr
-				if [ $(which agrep) ]; then
-					agrep -1 "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
-					if [ "$?" -eq 0 ]; then
-						echo
-						display_page_by_page "/tmp/enver.tmp"
-					else
-						echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
-					fi
-				fi
+				approximate_search "$1"
 			fi
 		fi
 	fi
 }
 
 function phrases() {
+	# As phrases are identified lines which are beginning with an upper case letter or
+	# containing "[Redewendung]" or containing "[idiom]".
+	#
+	# The searched string has to be in the first field, which ist the english part.
 	local searched="$1"
 	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
 	sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^	]*\<$searched\>.*	" | \
 	grep --color=always -wi "$searched" | tr "\t" "#" | column -s"#" -t
 }
+
+
+function get_amount_of_approximate_matches() {
+
+		local SEARCHED="$1"
+		local AMOUNT
+
+		if [ $(which agrep) ]; then
+			AMOUNT=$(agrep -c1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary")
+			if [ "$AMOUNT" -gt 0 ]; then
+
+				if [ "$AMOUNT" -gt 1 ]; then
+					local OBJECT_NAME="Datensätze"
+				else
+					local OBJECT_NAME="Datensatz"
+				fi
+				echo -e "\n\"$script_name -c $SEARCHED\" liefert $AMOUNT $OBJECT_NAME. (Suche nach ungefähr übereinstimmenden Wörtern)" > /dev/stderr
+			fi
+		fi
+}
+
 
 function write_amount_of_phrases() {
 
@@ -252,7 +290,7 @@ display_help_screen() {
  	echo "$script_name $script_version"
 	echo -e "\t\"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an."
 	echo -e "\nAUFRUFFORMAT:"
-	echo -e "\t$script_name [-v|-e|-V|-D|-P|-p|-f|-a|-h] VOKABEL"
+	echo -e "\t$script_name [-v|-e|-V|-c|-D|-P|-p|-f|-a|-h] VOKABEL"
 	echo -e "\nBEISPIELE:"
 	echo -e "\t$script_name -v translate"
 	echo -e "\t$script_name translate"
@@ -261,6 +299,7 @@ display_help_screen() {
 	echo -e "\t-v\tGibt schnell eine kurze Auskunft über ein englisches Verb."
 	echo -e "\t-e\tKann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war."
 	echo -e "\t-V\tSucht gründlich nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
+	echo -e "\t-c\tSucht nach englischen Wörtern, die dem Suchwort ähneln."
 	echo -e "\t-D\tSucht von einem deutschen Wort ausgehend nach englischen Verben."
 	echo -e "\t-P\tFindet Redewendungen (engl. \"phrases\") und Sätze mit der Zeichenkette."
 	echo -e "\t-p\tKombiniert \"-v\" (kurze Auskunft) mit \"-P\" (Liste von Redewendungen)."
@@ -271,6 +310,7 @@ display_help_screen() {
 	echo -e "\t-v \t--verb"
 	echo -e "\t-e \t--weiter, --erweitere, --extend, --deep-search"
 	echo -e "\t-V \t--verbs"
+	echo -e "\t-c \t--circa, --etwa, --ungefähr, --proximate"
 	echo -e "\t-D \t--deutsch, --de-en"
 	echo -e "\t-P \t--phrases"
 	echo -e "\t-p \t--phrases-too"
@@ -300,21 +340,20 @@ case $1 in
 	# Long list about the searched verb:
 	print_all_verbs "$2"
 	if [ "$?" -eq 0 ]; then
-		sleep 1
-		echo
-		echo "Weitergehende Suche auch nach Wortteilen startet." > /dev/stderr
-		sleep .75
+		# sleep 1
+		echo -e "\nWeitergehende Suche auch nach Wortteilen startet." > /dev/stderr
+		# sleep .75
 		print_verbs_full "$2"
 		if [ "$?" -ne 0 ]; then
 			print_full "$2"
 			if [ "$?" -ne 0 ]; then
 				echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
-				echo
-				sleep .5
-				echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
+				# sleep .5
+				echo -e "\nSuche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
 				print_all "$2"
 				if [ "$?" -ne 0 ]; then
 					echo "Die gesuchte Zeichenkette kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+					get_amount_of_approximate_matches "$2"
 				fi
 			fi
 		fi
@@ -325,6 +364,10 @@ case $1 in
 	# Start der Suchkaskade, die stufenweise bis drei verschiedene reguläre Ausdrücke benutzt, 
     	# um irgendwelche passenden Datensätze zur gesuchten Zeichenkette zu finden.
 	deep_search_cascade "$2"
+	;;
+
+  -c|-C|--circa|--etwa|--ungefähr|--proximate)
+	approximate_search "$2"
 	;;
 
   -g|-d|-G|-D|--de-en|--german|--deutsch)
