@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-#  enver 3.3.0
+#  enver 3.3.2
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -14,7 +14,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.3.0"
+script_version="3.3.2"
 Tab="	"
 
 
@@ -71,7 +71,7 @@ function display_page_by_page() {
 			if [ "$(which ${i})" ]; then
 				case "$i" in
 				  less)
-					CMD="less -S"
+					CMD="less -SX"
 					;;
 				  *)
 					CMD="${i}"
@@ -148,29 +148,48 @@ function print_all() {
 
 function approximate_search() {
 
-		local SEARCHED="$1"
+	local SEARCHED="$1"
+	local LEN
+	local MAX
 
-		echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
-		if [ $(which agrep) ]; then
-			agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
-			agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
+	echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
+	if [ $(which agrep) ]; then
+		agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
+		agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
+		if [ "$?" -eq 0 ]; then
+			echo
+			display_page_by_page "/tmp/enver.tmp"
+		else
+			agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
 			if [ "$?" -eq 0 ]; then
 				echo
 				display_page_by_page "/tmp/enver.tmp"
 			else
-				agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
-				if [ "$?" -eq 0 ]; then
-					echo
-					display_page_by_page "/tmp/enver.tmp"
-				else
-					echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
-				fi
+				LEN=${#SEARCHED}
+				MAX=$(bc <<< "scale=0; $LEN / 2")
+				# echo "\"$SEARCHED\" ist $LEN Zeichen lang."
+				# echo "MAX = $MAX"
+				MATCH_FOUND=1
+				for i in $(seq 1 $MAX);
+				do
+					LEN=$(( LEN - 1 ))
+					SEARCHED="${SEARCHED:0:$LEN}"
+					agrep -2 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+					if [ "$?" -eq 0 ]; then
+						echo
+						display_page_by_page "/tmp/enver.tmp"
+						MATCH_FOUND=0
+						break
+					fi
+				done
+				[ $MATCH_FOUND ] || echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
 			fi
-		else
-				echo "FEHLER: Das Programm \"agrep\" wurde nicht gefunden."
-				echo -e "\nFür eine ungefähre, fehlertolerante Suche muss agrep vorhanden sein."
-				echo "agrep bekommen Sie, wenn Sie das Paket \"glimpse\" installieren."
 		fi
+	else
+			echo "FEHLER: Das Programm \"agrep\" wurde nicht gefunden."
+			echo -e "\nFür eine ungefähre, fehlertolerante Suche muss agrep vorhanden sein."
+			echo "agrep bekommen Sie, wenn Sie das Paket \"glimpse\" installieren."
+	fi
 }		
 
 
@@ -192,6 +211,7 @@ function deep_search_cascade() {
 			print_all "$1"
 			if [ "$?" -ne 0 ]; then
 				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+				echo "deep-search_cascade: $1"
 				approximate_search "$1"
 			fi
 		fi
