@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-#  enver 3.3.2
+#  enver 3.3.3
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -14,7 +14,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.3.2"
+script_version="3.3.3"
 Tab="	"
 
 
@@ -199,19 +199,18 @@ function deep_search_cascade() {
 
 	local searched="$1"
 	echo "Weitergehende Suche auch nach Wortteilen startet." > /dev/stderr
-	sleep .75
+	# sleep .75
 	print_verbs_full "$1"
 	if [ "$?" -ne 0 ]; then
 		print_full "$1"
 		if [ "$?" -ne 0 ]; then
 			echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
 			echo
-			sleep .5
+			# sleep .5
 			echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
 			print_all "$1"
 			if [ "$?" -ne 0 ]; then
 				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
-				echo "deep-search_cascade: $1"
 				approximate_search "$1"
 			fi
 		fi
