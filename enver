@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-#  enver 3.2.0
+#  enver 3.3.0
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -14,7 +14,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.2.0"
+script_version="3.3.0"
 Tab="	"
 
 
@@ -152,12 +152,19 @@ function approximate_search() {
 
 		echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
 		if [ $(which agrep) ]; then
-			agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+			agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
+			agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
 			if [ "$?" -eq 0 ]; then
 				echo
 				display_page_by_page "/tmp/enver.tmp"
 			else
-				echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
+				agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+				if [ "$?" -eq 0 ]; then
+					echo
+					display_page_by_page "/tmp/enver.tmp"
+				else
+					echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
+				fi
 			fi
 		else
 				echo "FEHLER: Das Programm \"agrep\" wurde nicht gefunden."
