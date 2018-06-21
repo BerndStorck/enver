@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-#  enver 3.4.0
+#  enver 3.4.1
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
@@ -14,7 +14,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.4.0"
+script_version="3.4.1"
 Tab="	"
 
 
@@ -146,72 +146,70 @@ function print_all() {
 }
 
 
-function approximate_search_level() {
+function approximate_search() {
 	# agrep has limitations for the lenght of complex search patterns. Therefore ist the 2. search level
 	# a simplification of the search which is perforemd by level 1.
 	#
-	# Search level 4 finally tries handles agrep prblem with long search patterns by shortening the
-	# searched word. This method was successful in many test with a long words.
+	# Search level 4 finally tries to handles agreps problem with long search patterns by shortening the
+	# searched word. This method was very successful in many test with some long words.
 
 	local SEARCHED="$1"
-	local SEARCH_LEVEL="$2"
+	local SEARCH_LEVEL
 	local MATCH_FOUND=1   # flag for "no match".
 	local LEN
 	local MAX
 
-	case "$SEARCH_LEVEL" in
-		1)
-			agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
-			agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
-			MATCH_FOUND="$?"
-			;;
-		2)
-			agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary"          | \
-			agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
-			MATCH_FOUND="$?"
-			;;
-		3)
-			agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
-			MATCH_FOUND="$?"
-			;;
-		4)
-			LEN=${#SEARCHED}
-			MAX=$(bc <<< "scale=0; $LEN / 2")
-			# echo "\"$SEARCHED\" ist $LEN Zeichen lang."
-			# echo "MAX = $MAX"
-			for i in $(seq 1 $MAX);
-			do
-				LEN=$(( LEN - 1 ))
-				SEARCHED="${SEARCHED:0:$LEN}"
-				agrep -2 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
-				if [ "$?" -eq 0 ]; then
-					# SUBLEVEL=".$i"
-					MATCH_FOUND=0
-					break
-				fi
-			done
-			if [ $MATCH_FOUND -eq 1 ]; then 
-				echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
-				exit 1
-			fi
-			;;
-	esac
-
-	if [ $MATCH_FOUND -eq 0 ]; then
-		# "approximate search level ${SEARCH_LEVEL}${SUBLEVEL}" > /dev/pts/0
-		echo 
-		display_page_by_page "/tmp/enver.tmp"
-	else
-		approximate_search_level "$SEARCHED" "$(( SEARCH_LEVEL + 1 ))"
-	fi
-}
-
-
-function approximate_search() {
-
 	echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
 	if [ $(which agrep) ]; then
-		approximate_search_level "$1" 1
+
+		for SEARCH_LEVEL in 1 2 3 4;
+		do
+
+			case "$SEARCH_LEVEL" in
+				1)
+					agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
+					agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
+					MATCH_FOUND="$?"
+					;;
+				2)
+					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary"          | \
+					agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
+					MATCH_FOUND="$?"
+					;;
+				3)
+					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+					MATCH_FOUND="$?"
+					;;
+				4)
+					LEN=${#SEARCHED}
+					MAX=$(bc <<< "scale=0; $LEN / 2")
+					# echo "\"$SEARCHED\" ist $LEN Zeichen lang."
+					# echo "MAX = $MAX"
+					for i in $(seq 1 $MAX);
+					do
+						LEN=$(( LEN - 1 ))
+						SEARCHED="${SEARCHED:0:$LEN}"
+						agrep -2 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+						if [ "$?" -eq 0 ]; then
+							# SUBLEVEL=".$i"
+							MATCH_FOUND=0
+							break
+						fi
+					done
+					if [ $MATCH_FOUND -eq 1 ]; then 
+						echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
+						exit 1
+					fi
+					;;
+			esac
+
+			if [ $MATCH_FOUND -eq 0 ]; then
+				# echo "approximate search level ${SEARCH_LEVEL}${SUBLEVEL}" > /dev/pts/0
+				echo 
+				display_page_by_page "/tmp/enver.tmp"
+				exit 0
+			fi
+		done
 
 	else
 		echo "FEHLER: Das Programm \"agrep\" wurde nicht gefunden."
@@ -219,7 +217,6 @@ function approximate_search() {
 		echo "agrep bekommen Sie, wenn Sie das Paket \"glimpse\" installieren."
 	fi
 }		
-
 
 function deep_search_cascade() {
 	# This extended search tries to find datasets by a cascade of three regular expressions, the
