@@ -7,6 +7,17 @@ Das Kommando "enver --help" zeigt alle Aufrufvarianten an, die das Script
 versteht.
 
 
+KURZBESCHREIBUNG DER WICHTIGSTEN AUFRUFVARIANTEN
+
+ enver SUCHWORT    | schnelle einfache Suche  | findet einige Ergebnisse
+
+ enver -V SUCHWORT | gründlichere Suche       | findet mehr Ergebnisse
+
+ enver -e SUCHWORT | sehr gründliche Suche    | sucht auch fehlertolerant
+
+ enver -P SUCHWORT |                          | findet Redewendungen
+
+
 STANDARDMODUS (enver -v)
 
   Der Aufruf "enver SUCHWORT" oder gleichwertig "enver -v SUCHWORT"
@@ -16,16 +27,6 @@ STANDARDMODUS (enver -v)
   Wenn "enver -v" keine passenden Datensätze findet, ermittelt das 
   Programm automatisch, ob es auf andere Weise ungefähr passende
   Datensätze finden kann, und weist auf diese Möglichkeit hin.
-
-
-ERWEITERTE, TIEFERE KASKADIERENDE SUCHE (enver -e)
-
-  War "enver SUCHWORT" oder "enver -v SUCHWORT" erfolglos, so können
-  möglicherweise durch den Aufruf "enver -e SUCHWORT" doch noch ungefähr
-  passende Datensätze gefunden werden. 
-
-  Der Aufruf von "enver -e" führt zu keinen weiteren Ergebnissen, wenn
-  der im Folgenden beschriebene Aufruf "enver -V" schon benutzt wurde.
 
 
 AUSFÜHRLICHERE SUCHE (enver -V)
@@ -57,3 +58,15 @@ AUSFÜHRLICHERE SUCHE (enver -V)
   von enver die Zeichenkette "| cat" anzuhängen. Beispielsweise:
 
 	enver -V walk | cat
+
+
+ERWEITERTE, TIEFERE KASKADIERENDE SUCHE (enver -e)
+
+  War "enver SUCHWORT", "enver -v SUCHWORT" oder "enver -V SUCHWORT"
+  erfolglos, so können möglicherweise durch den Aufruf "enver -e SUCHWORT" 
+  doch noch ungefähr passende Datensätze gefunden werden. 
+
+  Der Aufruf von "enver -e" führt, wenn anders nichts gefunden wird, 
+  eine fehlertolerante Suche durch, die auch Datensätze findet, in denen
+  ein Wort vorkommt, dass vom Suchwort in einem Zeichen unterscheidet.
+

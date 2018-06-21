@@ -77,16 +77,25 @@ Linux-Systems eingetragen sein sollte.
 
 NOTWENDIGE PAKETE
 
-Folgende Pakete müssen installiert sein. In Klammern steht das Programm aus
-dem jeweiligen Paket, das enver benötigt.
+Folgendes Paket muss installiert sein. In Klammern steht das Programm aus
+dem Paket, das enver benötigt.
 
  - bsdmainutils 	(columns)
- - ncurses-bin 		(tput)
- - coreutils 		(stty)
 
 
 EMPFOHLENE ZUSATZPROGRAMME
 
-Für eine fehlertolerante Suche verwendet enver das Programm "agrep" aus dem 
-Paket "glimpse". Wenn agrep von enver nicht gefunden wird, unterbleibt die
-fehlertolerante Suche. Ich empfehle das Paket "glimpse" zu installieren.
+Folgendes Pakete sollten installiert sein. In Klammern steht das Programm 
+aus dem Paket, das enver benötigt, und dessen Aufgabe.
+
+ - ncurses-bin 	(tput, Terminalhöhe ermitteln, für die Anzeige langer 
+		Ergebnislisten in einem Pager.)
+
+ - coreutils 	(stty, Terminalhöhe ermitteln, enver benutzt stty, 
+ 		wenn es tput nicht finden kann.)
+
+ - glimpse	(agrep, fehlertolerante Suche.)
+
+Ich empfehle die Pakete "ncurses-bin" und "glimpse" zu installieren; 
+alternativ, aber auf Kosten der Verarbeitungsgeschwindigkeit, können
+"coreutils" und "glimpse" installiert werden. 
