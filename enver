@@ -1,34 +1,68 @@
 #! /bin/bash 
 #
-#  enver 3.0.0
+#  enver 3.1.0
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 #  Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-#  Stand: 2018-06-20
+#  Stand: 2018-06-21
 #  Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
 #
 
+# Static Values:
 script_name="enver"
-script_version="3.0.0"
-vocabulary="$(dirname "$(which enver)")/dictverbs.txt"
+script_version="3.1.0"
 Tab="	"
+
+
+# Default Values:
+LINECOUNTER="none"
+
+
+# Current Dynamic Values:
+vocabulary="$(dirname "$(which enver)")/dictverbs.txt"
+nDATASETS=$(wc -l < "$vocabulary")
+# AMOUNT_OF_LINES
+
+for i in tput stty
+do
+	if [ "$(which ${i})" ]; then
+		LINECOUNTER="$i"
+		break 
+	fi
+done
+
+
+function get_terminal_height() {
+	case "$LINECOUNTER" in
+		tput)
+			TERMINAL_HEIGHT=$(tput lines)
+			;;
+		stty)
+			TERMINAL_HEIGHT=$(stty size | cut -d" " -f1)
+			;;
+		*)
+			TERMINAL_HEIGHT=$(( nDATASETS +1 )) 	# Supresses every call of a pager, cause the 
+								# value is greater than the amount of data sets.
+			;;
+	esac
+}
 
 
 function display_page_by_page() {
 
-	local TERMINAL_HEIGHT
 	local INPUTFILE
-	local AMOUNT_OF_LINES
 	local CMD
 
-	TERMINAL_HEIGHT=$(stty size | cut -d" " -f1)
+	CMD="cat"  # default value
+
+	# Current Values:
 	INPUTFILE="$1"
 	AMOUNT_OF_LINES="$(wc -l < "$1")" 
-	CMD="cat" 
+	get_terminal_height   # sets the value of the script global var TERMINAL_HEIGHT.
 
 	if [[ "$AMOUNT_OF_LINES" -gt $(( TERMINAL_HEIGHT - 1 )) ]]; then
 		for i in less most more pg
@@ -36,11 +70,11 @@ function display_page_by_page() {
 			if [ "$(which ${i})" ]; then
 				case "$i" in
 				  less)
-						CMD="less -S"
-						;;
+					CMD="less -S"
+					;;
 				  *)
-						CMD="${i}"
-						;;
+					CMD="${i}"
+					;;
 				esac
 				break 
 			fi
@@ -49,6 +83,7 @@ function display_page_by_page() {
 
 	eval "${CMD} $INPUTFILE"
 }
+
 
 function default_output() {
 	local searched="$1"
@@ -60,20 +95,13 @@ function default_output() {
 function print_all_verbs() {
 	local searched="$1"
 	local counter
+
+	get_terminal_height
+
 	grep -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
 	if test -s /tmp/enver.tmp; then
-		counter="$(wc -l '/tmp/enver.tmp' | cut -d" " -f1)" 
-		if [[ "$counter" -gt $(tput lines) ]]; then
-			if [ "$(which less)" ]; then
-				less -S /tmp/enver.tmp
-			elif [ "$(which most)" ]; then
-				most /tmp/enver.tmp
-			else
-				more /tmp/enver.tmp
-			fi
-		else
-			cat /tmp/enver.tmp
-		fi
+		display_page_by_page "/tmp/enver.tmp"
+		counter=$AMOUNT_OF_LINES
 	else
 		counter=0
 		echo "Kein Datensatz, keine Erklärung zu \"$searched\" gefunden." > /dev/stderr
@@ -100,7 +128,7 @@ function print_full() {
 	# squared brackets "[anntotation or tag]".
 
 	local searched="$1"
-        grep -iE "^[^[$Tab]*$1" "$vocabulary" | grep -F --color=always "$1"
+	grep -iE "^[^[$Tab]*$1" "$vocabulary" | grep -F --color=always "$1"
 	return $?
 }	
 
@@ -134,11 +162,14 @@ function deep_search_cascade() {
 			print_all "$1"
 			if [ "$?" -ne 0 ]; then
 				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+				echo
 				echo "Versuch einer fehlertoleranten Suche startet." > /dev/stderr
 				if [ $(which agrep) ]; then
-					agrep -2 "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
-					display_page_by_page "/tmp/enver.tmp"
-					if [ "$?" -ne 0 ]; then
+					agrep -1 "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+					if [ "$?" -eq 0 ]; then
+						echo
+						display_page_by_page "/tmp/enver.tmp"
+					else
 						echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
 					fi
 				fi
