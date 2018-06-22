@@ -1,0 +1,31 @@
+#! /bin/bash
+#
+#  sample
+# 
+#  Erstellt eine Auswahl von Datensätzen aus der Eingabedatei.
+#
+#  Extracts a sample of data records.
+#
+#  Call: sample 100 dixtverbs.txt  # Would write 100 lines from "dictverbs.txt" to "sample.txt".
+
+if [ "$1" = "--help" ]; then
+	echo -e "\nsample"
+	echo -e "\nIf \"file1\" is the name of an text file, than the command \"sample 200 file1\" will extract 200 lines from file1 and write them to a file named \"samples.txt\"".
+	echo -e "\nThe script was build to study the structure of the data records of a flat file database with less than 200000 records."
+	echo -e "\nCALL"
+	echo -e "\tsample <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE>"
+	echo -e "\nEXAMPLE"
+	echo -e "\tsample 200 dictverbs.txt\n"
+	exit 0
+fi
+
+AMOUNT_OF_SAMPLE_LINES="$1"
+INPTFILE="$2"
+AMOUNT_OF_INPUT_LINES=$(wc -l < "$INPTFILE")
+
+JUMP_WIDTH=$(( AMOUNT_OF_INPUT_LINES / AMOUNT_OF_SAMPLE_LINES ))
+
+CMD="$(seq -s"p;" 1 $JUMP_WIDTH $AMOUNT_OF_INPUT_LINES)p"
+sed -n "$CMD" "${INPTFILE}" > samples.txt
+
+exit 0
