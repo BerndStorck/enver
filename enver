@@ -1,12 +1,12 @@
 #! /bin/bash 
 #
-#  enver 3.4.1
+#  enver 3.4.2
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 #  Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-#  Stand: 2018-06-21
+#  Stand: 2018-06-22
 #  Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
@@ -14,7 +14,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.4.1"
+script_version="3.4.2"
 Tab="	"
 
 
@@ -86,6 +86,16 @@ function display_page_by_page() {
 }
 
 
+function define_numerus() {
+
+		if [ "$1" -gt 1 ]; then
+			OBJECT_NAME="$3"
+		else
+			OBJECT_NAME="$2"
+		fi
+}		
+
+
 function default_output() {
 	local searched="$1"
 	grep -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t
@@ -147,10 +157,10 @@ function print_all() {
 
 
 function approximate_search() {
-	# agrep has limitations for the lenght of complex search patterns. Therefore ist the 2. search level
+	# agrep has limitations for the lenght of complex search patterns. Therefore is the 2. search level
 	# a simplification of the search which is perforemd by level 1.
 	#
-	# Search level 4 finally tries to handles agreps problem with long search patterns by shortening the
+	# Search level 4 finally tries to handle agreps problem with long search patterns by shortening the
 	# searched word. This method was very successful in many test with some long words.
 
 	local SEARCHED="$1"
@@ -168,16 +178,16 @@ function approximate_search() {
 			case "$SEARCH_LEVEL" in
 				1)
 					agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
-					agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
+					agrep -1 -w "$SEARCHED" > /tmp/enver1.tmp
 					MATCH_FOUND="$?"
 					;;
 				2)
 					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary"          | \
-					agrep -1 -w "$SEARCHED" > /tmp/enver.tmp
+					agrep -1 -w "$SEARCHED" > /tmp/enver1.tmp
 					MATCH_FOUND="$?"
 					;;
 				3)
-					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver1.tmp
 					MATCH_FOUND="$?"
 					;;
 				4)
@@ -189,7 +199,7 @@ function approximate_search() {
 					do
 						LEN=$(( LEN - 1 ))
 						SEARCHED="${SEARCHED:0:$LEN}"
-						agrep -2 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver.tmp
+						agrep -2 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver1.tmp
 						if [ "$?" -eq 0 ]; then
 							# SUBLEVEL=".$i"
 							MATCH_FOUND=0
@@ -204,6 +214,12 @@ function approximate_search() {
 			esac
 
 			if [ $MATCH_FOUND -eq 0 ]; then
+				cat /tmp/enver1.tmp | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
+				if [ "$?" -eq 0 ]; then
+						rm /tmp/enver1.tmp
+				else
+						mv /tmp/enver1.tmp /tmp/enver.tmp
+				fi
 				# echo "approximate search level ${SEARCH_LEVEL}${SUBLEVEL}" > /dev/pts/0
 				echo 
 				display_page_by_page "/tmp/enver.tmp"
@@ -217,6 +233,7 @@ function approximate_search() {
 		echo "agrep bekommen Sie, wenn Sie das Paket \"glimpse\" installieren."
 	fi
 }		
+
 
 function deep_search_cascade() {
 	# This extended search tries to find datasets by a cascade of three regular expressions, the
@@ -263,12 +280,9 @@ function get_amount_of_approximate_matches() {
 			AMOUNT=$(agrep -c1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary")
 			if [ "$AMOUNT" -gt 0 ]; then
 
-				if [ "$AMOUNT" -gt 1 ]; then
-					local OBJECT_NAME="Datensätze"
-				else
-					local OBJECT_NAME="Datensatz"
-				fi
+				define_numerus $AMOUNT "Datensatz" "Datensätze"
 				echo -e "\n\"$script_name -c $SEARCHED\" liefert $AMOUNT $OBJECT_NAME. (Suche nach ungefähr übereinstimmenden Wörtern)" > /dev/stderr
+
 			fi
 		fi
 }
@@ -276,19 +290,15 @@ function get_amount_of_approximate_matches() {
 
 function write_amount_of_phrases() {
 
-	local searched="$1"
-	local amount_of_phrases
-	amount_of_phrases=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
-	grep -c -iE "^[[:blank:]]*[^	]*\<$searched\>.*	")
+	local SEARCHED="$1"
+	local AMOUNT_OF_PHRASES
+	AMOUNT_OF_PHRASES=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
+	grep -c -iE "^[[:blank:]]*[^	]*\<$SEARCHED\>.*	")
 
-	if [ "$amount_of_phrases" -gt 0 ]; then
+	if [ "$AMOUNT_OF_PHRASES" -gt 0 ]; then
 
-		if [ "$amount_of_phrases" -gt 1 ]; then
-			local object_name="Datensätze"
-		else
-			local object_name="Datensatz"
-		fi
-		echo "\"$script_name -P $searched\" liefert $amount_of_phrases $object_name." > /dev/stderr
+		define_numerus $AMOUNT_OF_PHRASES "Redewendung" "Redewendungen"
+		echo "\"$script_name -P $SEARCHED\" findet $AMOUNT_OF_PHRASES $OBJECT_NAME." > /dev/stderr
 	
 	fi
 }
@@ -296,18 +306,14 @@ function write_amount_of_phrases() {
 function write_total_amount() {
 	# Counts how many datasets the command "enver -V" finds.
 
-	local searched="$1"
-	local amount
-	amount=$(grep -c -E "^[[:blank:]]*(to )\<$searched\>.*	" "$vocabulary")
+	local SEARCHED="$1"
+	local AMOUNT
+	AMOUNT=$(grep -c -E "^[[:blank:]]*(to )\<$SEARCHED\>.*	" "$vocabulary")
 
-	if [ "$amount" -gt 0 ]; then
+	if [ "$AMOUNT" -gt 0 ]; then
 
-		if [ "$amount" -gt 1 ]; then
-			local object_name="Datensätze"
-		else
-			local object_name="Datensatz"
-		fi
-		echo -e  "\n\"$script_name -V $searched\" liefert $amount $object_name." > /dev/stderr
+		define_numerus $AMOUNT "Datensatz" "Datensätze"
+		echo -e  "\n\"$script_name -V $SEARCHED\" liefert $AMOUNT $OBJECT_NAME." > /dev/stderr
 	
 	fi
 }
@@ -412,8 +418,8 @@ case $1 in
 	;;
 
   -e|-E|--weiter|--erweitere|--extend|--deep-search|--deep_search|--deep)
-	# Start der Suchkaskade, die stufenweise bis drei verschiedene reguläre Ausdrücke benutzt, 
-    	# um irgendwelche passenden Datensätze zur gesuchten Zeichenkette zu finden.
+		# Start der Suchkaskade, die stufenweise bis drei verschiedene reguläre Ausdrücke benutzt, 
+		# um irgendwelche passenden Datensätze zur gesuchten Zeichenkette zu finden.
 	deep_search_cascade "$2"
 	;;
 
