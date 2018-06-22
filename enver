@@ -12,6 +12,18 @@
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
 #
 
+
+# TECHNICAL COMMENT FOR PROGRAMMERS
+#
+# enver (for "english verbs") filters a flat file database, which is a list of englisch verbs and
+# their german meaning.
+#
+# Every data record is a line. Records are consisting of exactly two fields, which are separated 
+# by a tab character. First field contains the englisch part, second field the german equivalent.
+#
+# The fields have a substructure, containing for example tags.
+
+
 # Static Values:
 script_name="enver"
 script_version="3.4.2"
@@ -57,6 +69,8 @@ function display_page_by_page() {
 	local INPUTFILE
 	local CMD
 
+	tail -f "$INPUTFILE" > /dev/pts/4
+	
 	CMD="cat"  # default value
 
 	# Current Values:
