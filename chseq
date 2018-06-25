@@ -1,0 +1,57 @@
+#! /bin/bash
+#
+#  chseq
+#
+#  Tauscht die Datenfelder in der Datei dictverbs.txt aus.
+#
+#  Bernd Storck, 25. Juni 2018
+
+PROGNAME="$(basename "$0")"
+
+
+function hilfe() {
+	echo "
+$PROGNAME
+	Tauscht die Datenfelder einer Datei aus, die je Zeile/Datensatz 
+	zwei durch ein Tabulatorzeichen getrennte Felder enthält.
+
+	ACHTUNG: Dabei wird die ursprüngliche Datei überschrieben.
+
+	Das Programm ist ein Hifswerkzeug für das Programm \"enver\" und verarbeitet standardmäßig,
+	das heißt, wenn es ohne weitere Angaben aufgerufen wird eine Datei namens \"dictverbs.txt\".
+
+AUFRUFVARIANTEN
+	$PROGNAME
+	$PROGNAME DATEINAME
+	$PROGNAME [-h|--help]
+"
+
+	exit 0
+}	
+
+
+if [ ${#1} -gt 0 ]; then
+	case "$1" in
+		-h|--help)
+			hilfe
+			exit 0
+			;;
+		*)
+			INPTFILE="$1"
+			;;
+	esac
+else
+	INPTFILE="dictverbs.txt"
+fi
+
+if [ -s $INPTFILE ]; then
+	cut -f1 dictverbs.txt > enver_field1
+	cut -f2 dictverbs.txt > enver_field2
+	paste enver_field2 enver_field1 > dictverbs.txt
+	rm -f ./enver_field{1,2} 
+else
+	echo -e "\nFEHLER: Die zu verarbeitende Datei \"$INPTFILE\" wurde nicht gefunden.\n"
+	exit 1
+fi	
+
+exit 0
