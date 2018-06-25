@@ -357,37 +357,45 @@ function count_cascade() {
 	return "$amount"
 }
 
+
 display_help_screen() {
- 	echo "$script_name $script_version"
-	echo -e "\t\"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an."
-	echo -e "\nAUFRUFFORMAT:"
-	echo -e "\t$script_name [-v|-e|-V|-c|-D|-P|-p|-f|-a|-h] VOKABEL"
-	echo -e "\nBEISPIELE:"
-	echo -e "\t$script_name -v translate"
-	echo -e "\t$script_name translate"
-	echo -e "\n\t(Beide Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)"
-	echo -e "\nAUFRUFPARAMETER:";
-	echo -e "\t-v\tGibt schnell eine kurze Auskunft über ein englisches Verb."
-	echo -e "\t-e\tKann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war."
-	echo -e "\t-V\tSucht gründlich nach englischen Verben und listet alle dazu verfügbaren Datensätze auf."
-	echo -e "\t-c\tSucht nach englischen Wörtern, die dem Suchwort ähneln."
-	echo -e "\t-D\tSucht von einem deutschen Wort ausgehend nach englischen Verben."
-	echo -e "\t-P\tFindet Redewendungen (engl. \"phrases\") und Sätze mit der Zeichenkette."
-	echo -e "\t-p\tKombiniert \"-v\" (kurze Auskunft) mit \"-P\" (Liste von Redewendungen)."
-	echo -e "\t-f\tZeigt Datensätze mit der gesuchten Zeichenkette im englischen Vokabeltext."
-	echo -e "\t-a\tZeigt alle Datensätze mit der gesuchten Zeichenkette im englischen Datenfeld."
-	echo -e "\t-h\tZeigt diese Hilfeseite an."
-	echo -e "\nALTERNATIVE SPRECHENDE AUFRUFPARAMETER:";
-	echo -e "\t-v \t--verb"
-	echo -e "\t-e \t--weiter, --erweitere, --extend, --deep-search"
-	echo -e "\t-V \t--verbs"
-	echo -e "\t-c \t--circa, --etwa, --ungefähr, --proximate"
-	echo -e "\t-D \t--deutsch, --de-en"
-	echo -e "\t-P \t--phrases"
-	echo -e "\t-p \t--phrases-too"
-	echo -e "\t-f \t--full"
-	echo -e "\t-a \t--all, --alle, --alles"
-	echo -e "\t-h \t--help"
+ 	echo "
+$script_name $script_version
+    \"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an.
+	
+AUFRUFFORMAT:
+    $script_name [-v|-e|-V|-c|-D|-P|-p|-f|-a|-h] VOKABEL
+	
+BEISPIELE:
+    $script_name -v translate
+    $script_name translate
+	
+    (Beide Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)
+	
+AUFRUFPARAMETER:
+    -v   Gibt schnell eine kurze Auskunft über ein englisches Verb.
+    -e   Kann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war.
+    -V   Sucht gründlich nach englischen Verben und listet alle dazu verfügbaren Datensätze auf.
+    -c   Sucht nach englischen Wörtern, die dem Suchwort ähneln.
+    -D   Sucht von einem deutschen Wort ausgehend nach englischen Verben.
+    -P   Findet Redewendungen (engl. \"phrases\") und Sätze mit der Zeichenkette.
+    -p   Kombiniert \"-v\" (kurze Auskunft) mit \"-P\" (Liste von Redewendungen).
+    -f   Zeigt Datensätze mit der gesuchten Zeichenkette im englischen Vokabeltext.
+    -a   Zeigt alle Datensätze mit der gesuchten Zeichenkette im englischen Datenfeld.
+    -h   Zeigt diese Hilfeseite an.
+	    
+ALTERNATIVE SPRECHENDE AUFRUFPARAMETER:
+    -v    --verb
+    -e    --weiter, --erweitere, --extend, --deep-search
+    -V    --verbs
+    -c    --circa, --etwa, --ungefähr, --proximate
+    -D    --deutsch, --de-en
+    -P    --phrases
+    -p    --phrases-too
+    -f    --full
+    -a    --all, --alle, --alles
+    -h    --help
+"
 }
 
 
