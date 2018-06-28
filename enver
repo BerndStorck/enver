@@ -1,12 +1,12 @@
 #! /bin/bash 
 #
-#  enver 3.4.2
+#  enver 3.4.3
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 #  Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-#  Stand: 2018-06-22
+#  Stand: 2018-06-28
 #  Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
@@ -26,38 +26,38 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.4.2"
+script_version="3.4.3"
 Tab="	"
 
 
 # Default Values:
-LINECOUNTER="none"
+linecounter="none"
 
 
 # Current Dynamic Values:
 vocabulary="$(dirname "$(which enver)")/dictverbs.txt"
 # vocabulary="$(dirname "$(which enver)")/cmcgnoosos-916510172-e6o859.txt"
-nDATASETS=$(wc -l < "$vocabulary")
+quantity_of_records=$(wc -l < "$vocabulary")
 
 for i in tput stty
 do
 	if [ "$(which ${i})" ]; then
-		LINECOUNTER="$i"
+		linecounter="$i"
 		break 
 	fi
 done
 
 
 function get_terminal_height() {
-	case "$LINECOUNTER" in
+	case "$linecounter" in
 		tput)
-			TERMINAL_HEIGHT=$(tput lines)
+			terminal_height=$(tput lines)
 			;;
 		stty)
-			TERMINAL_HEIGHT=$(stty size | cut -d" " -f1)
+			terminal_height=$(stty size | cut -d" " -f1)
 			;;
 		*)
-			TERMINAL_HEIGHT=$(( nDATASETS +1 )) 	# Supresses every call of a pager, cause the 
+			terminal_height=$(( quantity_of_records + 1 )) 	# Supresses every call of a pager, cause the 
 								# value is greater than the amount of data sets.
 			;;
 	esac
@@ -66,29 +66,29 @@ function get_terminal_height() {
 
 function display_page_by_page() {
 
-	local INPUTFILE
-	local CMD
+	local inptfile
+	local cmd
 
-	tail -f "$INPUTFILE" > /dev/pts/4
-	
-	CMD="cat"  # default value
+	tail -f "$inptfile" > /dev/pts/4
+
+	cmd="cat"  # default value
 
 	# Current Values:
-	INPUTFILE="$1"
-	AMOUNT_OF_LINES="$(wc -l < "$1")" 
-	get_terminal_height   # sets the value of the script global var TERMINAL_HEIGHT.
+	inptfile="$1"
+	quantity_of_lines="$(wc -l < "$1")" 
+	get_terminal_height   # sets the value of the script global var terminal_height.
 
-	if [[ "$AMOUNT_OF_LINES" -gt $(( TERMINAL_HEIGHT - 1 )) ]]; then
+	if [[ "$quantity_of_lines" -gt $(( terminal_height - 1 )) ]]; then
 		# Defines the pager program to use: 
 		for i in less most more pg
 		do
 			if [ "$(which ${i})" ]; then
 				case "$i" in
 				  less)
-					CMD="less -SX"
+					cmd="less -SX"
 					;;
 				  *)
-					CMD="${i}"
+					cmd="${i}"
 					;;
 				esac
 				break 
@@ -96,18 +96,18 @@ function display_page_by_page() {
 		done
 	fi
 
-	eval "${CMD} $INPUTFILE"  # Calls pager or cat for displaying the file with the resulting data sets.
+	eval "${cmd} $inptfile"  # Calls pager or cat for displaying the file with the resulting data sets.
 }
 
 
 function define_numerus() {
 
 		if [ "$1" -gt 1 ]; then
-			OBJECT_NAME="$3"
+			object_name="$3"
 		else
-			OBJECT_NAME="$2"
+			object_name="$2"
 		fi
-}		
+}
 
 
 function default_output() {
@@ -126,7 +126,7 @@ function print_all_verbs() {
 	grep -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
 	if test -s /tmp/enver.tmp; then
 		display_page_by_page "/tmp/enver.tmp"
-		counter=$AMOUNT_OF_LINES
+		counter=$quantity_of_lines
 	else
 		counter=0
 		echo "Kein Datensatz, keine Erklärung zu \"$searched\" gefunden." > /dev/stderr
@@ -155,7 +155,7 @@ function print_full() {
 	local searched="$1"
 	grep -iE "^[^[$Tab]*$1" "$vocabulary" | grep -F --color=always "$1"
 	return $?
-}	
+}
 
 function print_all() {
 	# Fields are separated by tabs.  First field is English, second German. 
@@ -177,64 +177,64 @@ function approximate_search() {
 	# Search level 4 finally tries to handle agreps problem with long search patterns by shortening the
 	# searched word. This method was very successful in many test with some long words.
 
-	local SEARCHED="$1"
-	local SEARCH_LEVEL
-	local MATCH_FOUND=1   # flag for "no match".
-	local LEN
-	local MAX
+	local searched="$1"
+	local search_level
+	local match_found=1   # flag for "no match".
+	local len
+	local max
 
 	echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
 	if [ $(which agrep) ]; then
 
-		for SEARCH_LEVEL in 1 2 3 4;
+		for search_level in 1 2 3 4;
 		do
 
-			case "$SEARCH_LEVEL" in
+			case "$search_level" in
 				1)
-					agrep -1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" | \
-					agrep -1 -w "$SEARCHED" > /tmp/enver1.tmp
-					MATCH_FOUND="$?"
+					agrep -1 "^[^$Tab]*$searched[^$Tab]*$Tab" "$vocabulary" | \
+					agrep -1 -w "$searched" > /tmp/enver1.tmp
+					match_found="$?"
 					;;
 				2)
-					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary"          | \
-					agrep -1 -w "$SEARCHED" > /tmp/enver1.tmp
-					MATCH_FOUND="$?"
+					agrep -1 "$searched[^$Tab]*$Tab" "$vocabulary"          | \
+					agrep -1 -w "$searched" > /tmp/enver1.tmp
+					match_found="$?"
 					;;
 				3)
-					agrep -1 "$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver1.tmp
-					MATCH_FOUND="$?"
+					agrep -1 "$searched[^$Tab]*$Tab" "$vocabulary" > /tmp/enver1.tmp
+					match_found="$?"
 					;;
 				4)
-					LEN=${#SEARCHED}
-					MAX=$(bc <<< "scale=0; $LEN / 2")
-					# echo "\"$SEARCHED\" ist $LEN Zeichen lang."
-					# echo "MAX = $MAX"
-					for i in $(seq 1 $MAX);
+					len=${#searched}
+					max=$(bc <<< "scale=0; $len / 2")
+					# echo "\"$searched\" ist $len Zeichen lang."
+					# echo "max = $max"
+					for i in $(seq 1 $max);
 					do
-						LEN=$(( LEN - 1 ))
-						SEARCHED="${SEARCHED:0:$LEN}"
-						agrep -2 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary" > /tmp/enver1.tmp
+						len=$(( len - 1 ))
+						searched="${searched:0:$len}"
+						agrep -2 "^[^$Tab]*$searched[^$Tab]*$Tab" "$vocabulary" > /tmp/enver1.tmp
 						if [ "$?" -eq 0 ]; then
-							# SUBLEVEL=".$i"
-							MATCH_FOUND=0
+							# sublevel=".$i"
+							match_found=0
 							break
 						fi
 					done
-					if [ $MATCH_FOUND -eq 1 ]; then 
+					if [ $match_found -eq 1 ]; then 
 						echo "Auch die fehlertolerante Suche hat kein ähnliches Wort gefunden."> /dev/stderr
 						exit 1
 					fi
 					;;
 			esac
 
-			if [ $MATCH_FOUND -eq 0 ]; then
+			if [ $match_found -eq 0 ]; then
 				cat /tmp/enver1.tmp | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
 				if [ "$?" -eq 0 ]; then
 						rm /tmp/enver1.tmp
 				else
 						mv /tmp/enver1.tmp /tmp/enver.tmp
 				fi
-				# echo "approximate search level ${SEARCH_LEVEL}${SUBLEVEL}" > /dev/pts/0
+				# echo "approximate search level ${search_level}${sublevel}" > /dev/pts/0
 				echo 
 				display_page_by_page "/tmp/enver.tmp"
 				exit 0
@@ -246,7 +246,7 @@ function approximate_search() {
 		echo -e "\nFür eine ungefähre, fehlertolerante Suche muss agrep vorhanden sein."
 		echo "agrep bekommen Sie, wenn Sie das Paket \"glimpse\" installieren."
 	fi
-}		
+}
 
 
 function deep_search_cascade() {
@@ -287,15 +287,15 @@ function phrases() {
 
 function get_amount_of_approximate_matches() {
 
-		local SEARCHED="$1"
-		local AMOUNT
+		local searched="$1"
+		local quantity
 
 		if [ $(which agrep) ]; then
-			AMOUNT=$(agrep -c1 "^[^$Tab]*$SEARCHED[^$Tab]*$Tab" "$vocabulary")
-			if [ "$AMOUNT" -gt 0 ]; then
+			quantity=$(agrep -c1 "^[^$Tab]*$searched[^$Tab]*$Tab" "$vocabulary")
+			if [ "$quantity" -gt 0 ]; then
 
-				define_numerus $AMOUNT "Datensatz" "Datensätze"
-				echo -e "\n\"$script_name -c $SEARCHED\" liefert $AMOUNT $OBJECT_NAME. (Suche nach ungefähr übereinstimmenden Wörtern)" > /dev/stderr
+				define_numerus $quantity "Datensatz" "Datensätze"
+				echo -e "\n\"$script_name -c $searched\" liefert $quantity $object_name. (Suche nach ungefähr übereinstimmenden Wörtern)" > /dev/stderr
 
 			fi
 		fi
@@ -304,31 +304,31 @@ function get_amount_of_approximate_matches() {
 
 function write_amount_of_phrases() {
 
-	local SEARCHED="$1"
-	local AMOUNT_OF_PHRASES
-	AMOUNT_OF_PHRASES=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
-	grep -c -iE "^[[:blank:]]*[^	]*\<$SEARCHED\>.*	")
+	local searched="$1"
+	local quantity_of_phrases
+	quantity_of_phrases=$(grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
+	grep -c -iE "^[[:blank:]]*[^	]*\<$searched\>.*	")
 
-	if [ "$AMOUNT_OF_PHRASES" -gt 0 ]; then
+	if [ "$quantity_of_phrases" -gt 0 ]; then
 
-		define_numerus $AMOUNT_OF_PHRASES "Redewendung" "Redewendungen"
-		echo "\"$script_name -P $SEARCHED\" findet $AMOUNT_OF_PHRASES $OBJECT_NAME." > /dev/stderr
-	
+		define_numerus $quantity_of_phrases "Redewendung" "Redewendungen"
+		echo "\"$script_name -P $searched\" findet $quantity_of_phrases $object_name." > /dev/stderr
+
 	fi
 }
 
 function write_total_amount() {
 	# Counts how many datasets the command "enver -V" finds.
 
-	local SEARCHED="$1"
-	local AMOUNT
-	AMOUNT=$(grep -c -E "^[[:blank:]]*(to )\<$SEARCHED\>.*	" "$vocabulary")
+	local searched="$1"
+	local quantity
+	quantity=$(grep -c -E "^[[:blank:]]*(to )\<$searched\>.*	" "$vocabulary")
 
-	if [ "$AMOUNT" -gt 0 ]; then
+	if [ "$quantity" -gt 0 ]; then
 
-		define_numerus $AMOUNT "Datensatz" "Datensätze"
-		echo -e  "\n\"$script_name -V $SEARCHED\" liefert $AMOUNT $OBJECT_NAME." > /dev/stderr
-	
+		define_numerus $quantity "Datensatz" "Datensätze"
+		echo -e  "\n\"$script_name -V $searched\" liefert $quantity $object_name." > /dev/stderr
+
 	fi
 }
 
@@ -362,16 +362,16 @@ display_help_screen() {
  	echo "
 $script_name $script_version
     \"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an.
-	
+
 AUFRUFFORMAT:
     $script_name [-v|-e|-V|-c|-D|-P|-p|-f|-a|-h] VOKABEL
-	
+
 BEISPIELE:
     $script_name -v translate
     $script_name translate
-	
+
     (Beide Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)
-	
+
 AUFRUFPARAMETER:
     -v   Gibt schnell eine kurze Auskunft über ein englisches Verb.
     -e   Kann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war.
@@ -383,7 +383,7 @@ AUFRUFPARAMETER:
     -f   Zeigt Datensätze mit der gesuchten Zeichenkette im englischen Vokabeltext.
     -a   Zeigt alle Datensätze mit der gesuchten Zeichenkette im englischen Datenfeld.
     -h   Zeigt diese Hilfeseite an.
-	    
+
 ALTERNATIVE SPRECHENDE AUFRUFPARAMETER:
     -v    --verb
     -e    --weiter, --erweitere, --extend, --deep-search
@@ -399,7 +399,7 @@ ALTERNATIVE SPRECHENDE AUFRUFPARAMETER:
 }
 
 
-case $1 in
+case "$1" in
 
   -v|--verb)
 	# "Short list, simple info about a verb:
@@ -409,7 +409,7 @@ case $1 in
 		write_amount_of_phrases "$2"
 	else  # if "enver -v" does not succeed, automatically execute the basic function of "enver -V":
 		print_all_verbs "$2" # print_all_verbs returns the number of found datasets. 0 means no success.
-		if [ "$?" -eq 0 ]; then  
+		if [ "$?" -eq 0 ]; then
 			count_cascade "$2"
 		fi
 	fi
@@ -439,17 +439,17 @@ case $1 in
 	fi
 	;;
 
-  -e|-E|--weiter|--erweitere|--extend|--deep-search|--deep_search|--deep)
-		# Start der Suchkaskade, die stufenweise bis drei verschiedene reguläre Ausdrücke benutzt, 
+  -[eE]|--weiter|--erweitere|--erweitert|--extend|--deep|--deep-search|--deep_search)
+		# Start der Suchkaskade, die stufenweise bis drei verschiedene reguläre Ausdrücke benutzt,
 		# um irgendwelche passenden Datensätze zur gesuchten Zeichenkette zu finden.
 	deep_search_cascade "$2"
 	;;
 
-  -c|-C|--circa|--etwa|--ungefähr|--proximate)
+  -[cC]|--circa|--etwa|--ungefähr|--proximate)
 	approximate_search "$2"
 	;;
 
-  -g|-d|-G|-D|--de-en|--german|--deutsch)
+  -[gG]|-[dD]|--de-en|--german|--deutsch)
 	# Find a verb to a german word:
 	grep -E "^[[:blank:]]*(to ).*$Tab.*\<$2\>" "$vocabulary" | tr "\t" "#" | column -s"#" -t
 	;;
@@ -504,4 +504,3 @@ case $1 in
 esac
 
 exit 0
-
