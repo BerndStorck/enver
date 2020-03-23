@@ -1,12 +1,12 @@
 #! /bin/bash 
 #
-#  enver 3.4.3
+#  enver 3.5.0
 #
 #  Liefert die Uebersetzung eines englische Verbs aus einer Woerterbuchdatei von "dict.cc".
 #
 #  Fuer eine Bedienungsanleitung "source enver --help" aufrufen!
 #
-#  Stand: 2018-06-28
+#  Stand: 2020-03-21
 #  Autor: Bernd Storck
 #
 # Veroeffentlicht via "https://www.facebook.com/BStLinux/"
@@ -15,18 +15,18 @@
 
 # TECHNICAL COMMENT FOR PROGRAMMERS
 #
-# enver (for "english verbs") filters a flat file database, which is a list of englisch verbs and
+# enver (for "english verbs") filters a flat file database, which is a list of english verbs and
 # their german meaning.
 #
 # Every data record is a line. Records are consisting of exactly two fields, which are separated 
 # by a tab character. First field contains the englisch part, second field the german equivalent.
 #
-# The fields have a substructure, containing for example tags.
+# The fields have a substructure, containing for example tags like "[idiom]".
 
 
 # Static Values:
 script_name="enver"
-script_version="3.4.3"
+script_version="3.5.0"
 Tab="	"
 
 
@@ -57,8 +57,8 @@ function get_terminal_height() {
 			terminal_height=$(stty size | cut -d" " -f1)
 			;;
 		*)
-			terminal_height=$(( quantity_of_records + 1 )) 	# Supresses every call of a pager, cause the 
-								# value is greater than the amount of data sets.
+			terminal_height=$(( quantity_of_records + 1 )) 	# Suppresses every call of a pager, 
+			# cause the value is greater than the amount of data records.
 			;;
 	esac
 }
@@ -69,9 +69,9 @@ function display_page_by_page() {
 	local inptfile
 	local cmd
 
-	tail -f "$inptfile" > /dev/pts/4
+	# tail -f "$inptfile" > /dev/pts/4
 
-	cmd="cat"  # default value
+	cmd="cat"  # default program to display the results.
 
 	# Current Values:
 	inptfile="$1"
@@ -96,7 +96,7 @@ function display_page_by_page() {
 		done
 	fi
 
-	eval "${cmd} $inptfile"  # Calls pager or cat for displaying the file with the resulting data sets.
+	eval "${cmd} $inptfile"  # Calls pager or cat for displaying the file with the resulting data records.
 }
 
 
@@ -114,25 +114,41 @@ function default_output() {
 	local searched="$1"
 	grep -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t
 	return "$(grep -c -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary")"
-
 }
 
 function print_all_verbs() {
 	local searched="$1"
-	local counter
 
 	get_terminal_height
 
 	grep -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
 	if test -s /tmp/enver.tmp; then
-		display_page_by_page "/tmp/enver.tmp"
-		counter=$quantity_of_lines
-	else
-		counter=0
-		echo "Kein Datensatz, keine Erklärung zu \"$searched\" gefunden." > /dev/stderr
+		display_page_by_page "/tmp/enver.tmp"    # sets also quantity_of_lines
+	else  
+		# 2020-03-21: Sucht nach einigen Ausdruecken mit Hilfsverben, 
+		# via mkbase.sh wurde dafuer die Datenbasis erweitert.
+		#
+		# Diese Datensaetze beginnen in der Datendatei von "dict.cc" mit "[you]".
+		grep -E "^[[:blank:]]*(|\[you\] )\<$searched\>.*$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
+		if test -s /tmp/enver.tmp; then
+			display_page_by_page "/tmp/enver.tmp"    # sets also quantity_of_lines
+		else
+			quantity_of_lines=0
+			echo "Kein Datensatz, keine Erklärung zu \"$searched\" gefunden." > /dev/stderr
+		fi
 	fi
 	rm -f /tmp/enver.tmp
-	return $counter
+	return $quantity_of_lines
+
+#	grep -E "^[[:blank:]]*(to )\<$searched\>.*$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t > /tmp/enver.tmp
+#	if test -s /tmp/enver.tmp; then
+#		display_page_by_page "/tmp/enver.tmp"    # sets also quantity_of_lines
+#	else
+#		quantity_of_lines=0
+#		echo "Kein Datensatz, keine Erklärung zu \"$searched\" gefunden." > /dev/stderr
+#	fi
+#	rm -f /tmp/enver.tmp
+#	return $quantity_of_lines
 }
 
 function print_verbs_full() {
@@ -142,7 +158,7 @@ function print_verbs_full() {
 	# In opposite to the function "print_full", this function looks only for lines,
 	# which are beginning with "to " followed by a word containing the search string.
 	local searched="$1"
-        grep -iE "^to +([[:alpha:]]-?)*$1" "$vocabulary"| grep -F --color=always "$1"
+        grep -iE "^to +([[:alpha:]]-?)*$searched" "$vocabulary"| grep -F --color=always "$searched"
 	return $?
 }
 
@@ -153,29 +169,34 @@ function print_full() {
 	# squared brackets "[anntotation or tag]".
 
 	local searched="$1"
-	grep -iE "^[^[$Tab]*$1" "$vocabulary" | grep -F --color=always "$1"
+	grep -iE "^[^[$Tab]*$searched" "$vocabulary" | grep -F --color=always "$searched"
 	return $?
 }
 
 function print_all() {
 	# Fields are separated by tabs.  First field is English, second German. 
+	#
 	# Finds all records/lines with the searched string in the first field, even
 	# if it is a part of a word or part of an annotation beween squared brackets.  
 	#
 	# The second search string contains three tab characters between the pair of 
 	# quotation marks!
 	local searched="$1"
-	grep --color=always -iE "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary"
+	grep --color=always -iE "^[^$Tab]*$searched[^$Tab]*$Tab" "$vocabulary"
 	return "$?"
 }
 
 
 function approximate_search() {
 	# agrep has limitations for the lenght of complex search patterns. Therefore is the 2. search level
-	# a simplification of the search which is perforemd by level 1.
+	# a simplification of the search which is performed by level 1.
+	#
+	# Search level 3 accepts that the searched string is not a word, but part of a word.
 	#
 	# Search level 4 finally tries to handle agreps problem with long search patterns by shortening the
-	# searched word. This method was very successful in many test with some long words.
+	# searched word. This method was very successful in many test with some long words. Furthermore 
+	# level 4 accepts via agrep a greater difference between the searched string and the found string
+	# than the levels 1 to 3 would accept.
 
 	local searched="$1"
 	local search_level
@@ -250,24 +271,24 @@ function approximate_search() {
 
 
 function deep_search_cascade() {
-	# This extended search tries to find datasets by a cascade of three regular expressions, the
-	# cascade will be stopped if one regular expression has found matching datasets.
+	# This extended search tries to find data records by a cascade of regular expressions, 
+	# the cascade will be stopped if one regular expression has found any matching data record.
 
 	local searched="$1"
 	echo "Weitergehende Suche auch nach Wortteilen startet." > /dev/stderr
 	# sleep .75
-	print_verbs_full "$1"
+	print_verbs_full "$searched"
 	if [ "$?" -ne 0 ]; then
-		print_full "$1"
+		print_full "$searched"
 		if [ "$?" -ne 0 ]; then
 			echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
 			echo
 			# sleep .5
 			echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
-			print_all "$1"
+			print_all "$searched"
 			if [ "$?" -ne 0 ]; then
-				echo "Die Zeichenkette \"$1\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
-				approximate_search "$1"
+				echo "Die Zeichenkette \"$searched\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+				approximate_search "$searched"
 			fi
 		fi
 	fi
@@ -277,7 +298,7 @@ function phrases() {
 	# As phrases are identified lines which are beginning with an upper case letter or
 	# containing "[Redewendung]" or containing "[idiom]".
 	#
-	# The searched string has to be in the first field, which ist the english part.
+	# The searched string has to be in the first field, which is the english part.
 	local searched="$1"
 	grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
 	sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^	]*\<$searched\>.*	" | \
@@ -340,11 +361,11 @@ function count_cascade() {
 
 	local searched="$1"
 	local amount
-	amount=$(grep -ciE "^to +([[:alpha:]]-?)*$1" "$vocabulary") # Counts print_verbs_full().
+	amount=$(grep -ciE "^to +([[:alpha:]]-?)*$searched" "$vocabulary") # Counts print_verbs_full().
 	if [ "$amount" -eq 0 ]; then
-        	amount=$(grep -ciE "^[^[$Tab]*$1" "$vocabulary") # Counts print_full().
+        	amount=$(grep -ciE "^[^[$Tab]*$searched" "$vocabulary") # Counts print_full().
 		if [ "$amount" -eq 0 ]; then  # Count print_all():
-			amount=$(grep --color=always -ciE "^[^$Tab]*$1[^$Tab]*$Tab" "$vocabulary")
+			amount=$(grep --color=always -ciE "^[^$Tab]*$searched[^$Tab]*$Tab" "$vocabulary")
 		fi
 	fi
 	if [ "$amount" -gt 1 ]; then 
