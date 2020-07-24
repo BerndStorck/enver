@@ -1,23 +1,41 @@
 #! /bin/bash
 #
-#  sample
-# 
-#  Erstellt eine Auswahl von Datensätzen aus der Eingabedatei.
+# sample
 #
-#  Extracts a sample of data records.
+# Erstellt eine Auswahl von Datensaetzen aus der Eingabedatei.
 #
-#  Call: sample 100 dixtverbs.txt  # Would write 100 lines from "dictverbs.txt" to "sample.txt".
+# Extracts a sample of data records.
+#
+# Call: sample 100 dixtverbs.txt  # Would write 100 lines from "dictverbs.txt" to "sample.txt".
+#
+# Bernd Storck, https://www.facebook.com/BStLinux/
 
-if [ "$1" = "--help" ]; then
-	echo -e "\nsample"
-	echo -e "\nIf \"file1\" is the name of an text file, than the command \"sample 200 file1\" will extract 200 lines from file1 and write them to a file named \"samples.txt\"".
-	echo -e "\nThe script was build to study the structure of the data records of a flat file database with less than 200000 records."
-	echo -e "\nCALL"
-	echo -e "\tsample <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE>"
-	echo -e "\nEXAMPLE"
-	echo -e "\tsample 200 dictverbs.txt\n"
-	exit 0
-fi
+PROGNAME="sample"
+VERSION="1.2.0"
+
+case "$1" in
+	--help|-h|--hilf|-hilf|--hilfe)
+		echo -e "\n sample
+
+ If \"file1\" is the name of an text file, than the command
+ \"sample 200 file1\" will extract 200 lines from file1 and
+ write them to a file named \"samples.txt\".
+
+ The script was build to study the structure of the data
+ records of a flat file database with about 200000 records.
+
+ CALL
+\tsample <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE>
+
+ EXAMPLE
+\tsample 200 dictverbs.txt\n"
+		exit 0
+		;;
+	--version|-version|-\#)
+		echo "$VERSION"
+		exit 0
+		;;
+esac
 
 AMOUNT_OF_SAMPLE_LINES="$1"
 INPTFILE="$2"
@@ -25,7 +43,7 @@ AMOUNT_OF_INPUT_LINES=$(wc -l < "$INPTFILE")
 
 JUMP_WIDTH=$(( AMOUNT_OF_INPUT_LINES / AMOUNT_OF_SAMPLE_LINES ))
 
-CMD="$(seq -s"p;" 1 $JUMP_WIDTH $AMOUNT_OF_INPUT_LINES)p"
+CMD="$(seq -s"p;" 1 $JUMP_WIDTH "$AMOUNT_OF_INPUT_LINES")p"
 sed -n "$CMD" "${INPTFILE}" > samples.txt
 
 exit 0
