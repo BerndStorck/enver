@@ -1,49 +1,275 @@
-#! /bin/bash
+#!/usr/bin/env bash
 #
 # sample
 #
-# Erstellt eine Auswahl von Datensaetzen aus der Eingabedatei.
+# Version: Look at the first constant definitions below!
 #
-# Extracts a sample of data records.
+# Project Description:
+#   en: Extracts a sample of data records.
+#   de: Erstellt eine Auswahl von Datensaetzen aus der Eingabedatei.
 #
-# Call: sample 100 dixtverbs.txt  # Would write 100 lines from "dictverbs.txt" to "sample.txt".
+# Dependencies:
+# - …
 #
-# Bernd Storck, https://www.facebook.com/BStLinux/
+# Usage:
+#   sample 100 dixtverbs.txt  # Would write 100 lines from "dictverbs.txt" to "sample.txt".
+#   sample --random 50 dixtverbs.txt  # Would write 50 random lines from "dictverbs.txt" to "sample.txt".
+#
+# Author:     Bernd Storck
+# Contact:    https://www.facebook.com/BStLinux/
+#
+# History:   [...], 2024-09-08
+#
+# Copyright:  2024, Bernd Storck
+# License:    GNU General Public License 3.0
 
+# > Value settings: < =======================================================
+
+# > Constants: < ------------------------------------------------------------
 PROGNAME="sample"
-VERSION="1.2.0"
+VERSION="1.3.1"
 
-case "$1" in
-	--help|-h|--hilf|-hilf|--hilfe)
-		echo -e "\n sample
+# > Defaults: < ------------------------------------------------------------
+to_stdout="false"
+random_sampling=false
+overwrite="false"
 
- If \"file1\" is the name of an text file, than the command
+# > Functions: < ============================================================
+
+usage () {
+printf "\n sample (%s)
+
+ If \"file1\" is the name of a text file, then the command
  \"sample 200 file1\" will extract 200 lines from file1 and
  write them to a file named \"samples.txt\".
 
- The script was build to study the structure of the data
- records of a flat file database with about 200000 records.
+ Alternatively, you can specify random sampling:
+ \"sample --random 50 file1\" will extract 50 random lines from file1.
+
+ The script was designed to study the structure of the data records in a
+ flat file database containing approximately 200,000 records or even more.
 
  CALL
-\tsample <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE>
+\tsample [--random] <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE> [<OUTPUT_FILE>]
 
  EXAMPLE
-\tsample 200 dictverbs.txt\n"
-		exit 0
-		;;
-	--version|-version|-\#)
-		echo "$VERSION"
-		exit 0
-		;;
+\tsample 200 dictverbs.txt
+\tsample --random 50 dictverbs.txt
+\tsample --random 50 dictverbs.txt custom_output.txt\n" "$VERSION"
+}
+
+
+check_input_file() {
+    local inputfile="$1"
+
+    if [ ! -f "$inputfile" ]; then
+        echo "ERROR: File \"$inputfile\" does not exist." > /dev/stderr
+        exit 1
+    elif [ ! -r "$inputfile" ]; then
+        echo "ERROR: File \"$inputfile\" is not readable." > /dev/stderr
+        exit 1
+    elif [ ! -s "$inputfile" ]; then
+        echo "ERROR: File \"$inputfile\" is empty." > /dev/stderr
+        exit 1
+    fi
+}
+
+
+check_output_file() {
+    local outpfile="$1"
+    local new_outpfile="$outpfile"
+
+    # echo "DEBUG: overwrite: \"$overwrite\"" > /dev/stderr; exit
+
+    if [ -e "$outpfile" ] && [ "$overwrite" != 'true' ]; then
+        echo "WARNING: Output file \"$outpfile\" already exists." > /dev/stderr
+        read -rp "Do you want to overwrite it? (y/n): " choice
+        case "$choice" in
+            y|Y|j|J)
+                echo "Overwriting \"$outpfile\"." > /dev/stderr
+                ;;
+            n|N)
+                read -rp "Enter new output file name: " new_outpfile
+                ;;
+            *)
+                echo "Invalid choice, exiting." > /dev/stderr
+                exit 1
+                ;;
+        esac
+    elif [ "$overwrite" = 'true' ]; then
+        echo "Overwriting \"$outpfile\"." > /dev/stderr
+    fi
+
+    echo "$new_outpfile"  # Return the new file name.
+}
+
+
+sample_lines() {
+    local input="$1"
+    local count="$2"
+    local total
+
+    total="$(wc -l < "$input")"
+
+    for ((i=1; i<=count; i++)); do
+        line=$((RANDOM % total + 1))
+        sed -n "${line}p" "$input"
+    done
+}
+
+
+check_amount_of_sample_lines() {
+    local amount_of_sample_lines="$1"
+    local amount_of_input_lines="$2"
+
+    # Check if the sample size is reasonable:
+    if [ "$amount_of_sample_lines" -gt "$amount_of_input_lines" ]; then
+        echo "WARNING: Requested more lines than available in file. Adjusting sample size to $amount_of_input_lines."    > /dev/stderr
+        echo "Assuming a sample of 20%." > /dev/stderr
+        amount_of_sample_lines="$(( amount_of_input_lines / 20 ))"
+    fi
+
+    echo "$amount_of_sample_lines"
+}
+
+perform_sampling() {
+    local inptfile="$1"
+    local amount_of_sample_lines="$2"
+    local outpfile="$3"
+    local random_sampling="$4"
+
+    if [ "$random_sampling" = true ]; then  # Random selection:
+        if command -v shuf &> /dev/null; then
+            shuf -n "$amount_of_sample_lines" "$inptfile" > "$outpfile"
+        elif command -v awk &> /dev/null; then
+            awk 'BEGIN {srand()} {print rand() "\t" $0}' "$inptfile" |\
+            sort -n | cut -f2- | head -n   "$amount_of_sample_lines" > "$outpfile"
+        else
+            sample_lines "$inptfile" "$amount_of_sample_lines" > "$outpfile"
+        fi
+    else  # Non-random selection:
+        # Calculate the jump distance and round up:
+        jump_width=$(( (amount_of_input_lines + amount_of_sample_lines - 1) / amount_of_sample_lines ))
+        cmd="$(seq -s"p;" 1 $jump_width "$amount_of_input_lines")p"
+        # echo "DEBUG: cmd: \"$cmd\""; exit
+        sed -n "$cmd" "${inptfile}" > "$outpfile"
+    fi
+}
+
+
+# > main < ============================================================
+
+# Read the names of protected files
+protected_files=()
+if [ -f "sample.cfg" ]; then
+    while IFS= read -r line; do
+        [[ -z "$line" || "$line" =~ ^# ]] && continue  # Ignore empty lines and comments.
+        line=$(xargs <<< "$line")  # Trim line.
+        protected_files+=("$line")
+    done < "sample.cfg"
+fi
+
+# > Call parameter Analysis: < ----------------------------------------
+
+case "$1" in
+  --help|-h|-help|--hilf|-hilf|--hilfe)
+      usage
+      exit 0
+      ;;
+  --version|-version|-\#)
+      echo "$VERSION"
+      exit 0
+      ;;
 esac
 
-AMOUNT_OF_SAMPLE_LINES="$1"
-INPTFILE="$2"
-AMOUNT_OF_INPUT_LINES=$(wc -l < "$INPTFILE")
+while getopts 'n:ry' option 2> /dev/null; do
+  case "$option" in
+    n)
+      to_stdout="true"  # Output only or also to StdOut.
+      amount_of_sample_lines="$OPTARG"
+      ;;
+    r)
+      random_sampling=true
+      ;;
+    y)
+      overwrite="true"
+      ;;
+    *) echo "WARNING: Unknown option \"$option\"."
+    ;;
+  esac
+done
 
-JUMP_WIDTH=$(( AMOUNT_OF_INPUT_LINES / AMOUNT_OF_SAMPLE_LINES ))
+# Shift, um die bereits ausgewerteten Argumente zu überspringen
+shift "$((OPTIND - 1))"
 
-CMD="$(seq -s"p;" 1 $JUMP_WIDTH "$AMOUNT_OF_INPUT_LINES")p"
-sed -n "$CMD" "${INPTFILE}" > samples.txt
+if [ "$to_stdout" != 'true' ]; then
+  necessary_parameters=2
+  if [ "$#" -lt "$necessary_parameters" ]; then
+      printf "ERROR: Invalid number of arguments.\n" > /dev/stderr
+      printf "Usage: sample [--random] <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE> [<OUTPUT_FILE>]\n" > /dev/stderr
+      exit 1
+  fi
+else
+  necessary_parameters=1
+  if [ "$#" -lt "$necessary_parameters" ]; then
+      printf "ERROR: Invalid number of arguments.\n" > /dev/stderr
+      printf "Usage: sample [--random] -n <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE> [<OUTPUT_FILE>]\n" > /dev/stderr
+      exit 1
+  fi
+fi
 
-exit 0
+if [ "$#" -lt "$necessary_parameters" ]; then
+    printf "ERROR: Invalid number of arguments.\n" > /dev/stderr
+    printf "Usage: sample [--random] <GET_HOW_MANY_LINES> <NAME_OF_INPUT_FILE> [<OUTPUT_FILE>]\n" > /dev/stderr
+    exit 1
+fi
+
+if [ "$1" = '--random' ] || [ "$1" = '-r' ]; then
+    random_sampling=true
+    if [ -z "$amount_of_sample_lines" ]; then
+      amount_of_sample_lines="$2"
+      inptfile="$3"
+      outpfile="${4:-samples.txt}"
+    else
+      inptfile="$1"
+      outpfile="${2:-samples.txt}"
+    fi
+else
+    if [ -z "$amount_of_sample_lines" ]; then
+      amount_of_sample_lines="$1"
+      inptfile="$2"
+      outpfile="${3:-samples.txt}"
+    else
+      inptfile="$1"
+      outpfile="${2:-samples.txt}"
+    fi
+fi
+
+while [ "$amount_of_sample_lines" -lt 1 ]; do
+  echo "ERROR: Sample is to small. Has to be larger than 0." > /dev/stderr
+  read -rp "How many lines should be extracted? : " amount_of_sample_lines
+done
+
+check_input_file "$inptfile"
+outpfile=$(check_output_file "$outpfile")  # Check if the output file already exists.
+
+# Check whether the output file is protected:
+for protected_file in "${protected_files[@]}"; do
+    if [ "$outpfile" = "$protected_file" ]; then
+        echo "ERROR: Output file \"$outpfile\" is protected and cannot be overwritten." > /dev/stderr
+        exit 1
+    fi
+done
+
+amount_of_input_lines=$(wc -l < "$inptfile")
+
+# Check if the sample size is reasonable:
+amount_of_sample_lines="$(check_amount_of_sample_lines "$amount_of_sample_lines" "$amount_of_input_lines")"
+
+perform_sampling "$inptfile" "$amount_of_sample_lines" "$outpfile" "$random_sampling"
+
+if [ "$to_stdout" = 'true' ]; then
+  cat "$outpfile"
+fi
+
+echo "Sampled $amount_of_sample_lines lines from \"$inptfile\" to \"$outpfile\"."
