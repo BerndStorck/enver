@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#  enver 3.10.2
+# enver
 # Version: Look at the first constant definitions below!
 #
 #
@@ -14,14 +14,14 @@
 # Fuer eine Bedienungsanleitung "enver --help" aufrufen!
 #
 # Dependencies:
-# - 
+# - columns (bsdmainutils)
 #
 # Author:    Bernd Storck
 # Contact:   https://www.facebook.com/BStLinux/
 #
-#  History:  2021-09-14, 2021-10-22, 2023-05-28, 2025-02-25
+#  History:  2021-09-14, 2021-10-22, 2023-05-28, 2025-02-25, 2026-10-19
 #
-# Copyright: 2024, Bernd Storck
+# Copyright: 2026, Bernd Storck
 # License:   GNU General Public License 3.0
 #
 
@@ -40,7 +40,7 @@
 
 # Static Values:
 script_name="enver"
-script_version="3.10.2"
+script_version="3.10.3"
 Tab="	"
 
 if [[ $# -lt 1 ]]; then  ## Reacts on the error case that enver is called without any parameter or argument.
@@ -546,7 +546,8 @@ function phrases {
   local searched="$1"
   grep -e "^[[:blank:]]*[A-Z]" -e "\[Redewendung\]" -e "\[idiom\]" "$vocabulary" | \
   sed "s/\[Redewendung\]//" | grep -iE "^[[:blank:]]*[^$Tab]*\<$searched\>.*$Tab" | \
-  grep --color=always -wi "$searched" | tr "\t" "#" | column -s"#" -t
+  grep -wi "$searched" | tr "\t" "#" | column -s"#" -t | \
+  grep --color=always -wi "$searched" 
 }
 
 
