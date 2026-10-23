@@ -14,12 +14,19 @@
 # Fuer eine Bedienungsanleitung "enver --help" aufrufen!
 #
 # Dependencies:
-# - columns (bsdmainutils)
+# - column ..................... (bsdmainutils oder util-linux)
+# - grep ....................... (mit -E, -w, -i; meist GNU grep)
+# - agrep ...................... (Paket 'glimpse' oder 'agrep') — zur fehlertoleranten Suche (--circa)
+# - less / most / more / pg .... (mindestens eines)
+# - tput oder stty ............. (optional, aber empfohlen)
+# - awk ........................ (für die Sample-Funktion)
 #
+
 # Author:    Bernd Storck
 # Contact:   https://www.facebook.com/BStLinux/
 #
 #  History:  2021-09-14, 2021-10-22, 2023-05-28, 2025-02-25, 2026-10-19
+#            2026-10-23
 #
 # Copyright: 2026, Bernd Storck
 # License:   GNU General Public License 3.0
@@ -37,71 +44,44 @@
 #
 # The fields have a substructure, which may include tags such as "[idiom]".
 
+# > Value settings: < =======================================================
 
-# Static Values:
-script_name="enver"
-script_version="3.10.3"
-Tab="	"
+# > Constants: < ------------------------------------------------------------
 
-if [[ $# -lt 1 ]]; then  ## Reacts on the error case that enver is called without any parameter or argument.
-  echo -e "\n\e[1;36m${script_name} $script_version
-\n\e[0;31mFehler: Zu wenige Aufrufparameter!\e[0m
-Fragen Sie nach einem englischen Verb z. B. durch \"$(basename $0) beg\"."
-  sleep 5
-  echo -e "\n\e[1;36mBEISPIEL 1: Was bedeutet das Verb "beg"? (Kurzauskunft).\e[0m
-\e[1;36mAUFRUF: $(basename $0) beg\e[0m"
-  eval "$0 beg"
-  sleep 2
-  echo -e "\n\e[1;36mBEISPIEL 2: Bedeutung von "beg" mit Redewendungen (engl. phrases).\e[0m
-\e[1;36mAUFRUF: $(basename $0) -p beg\e[0m"
-  eval "$0 -p beg"
-  sleep 2
-  echo -e "\n\e[1;36mBEISPIEL 3: Bedeutungsübersicht zu "beg" aus maximal 8 Datensätzen.\e[0m
-\e[1;36mAUFRUF: $(basename $0) -s 8 beg\e[0m"
-  eval "$0 -s 8 beg"
-  echo
-  exit 1
-fi
+readonly SCRIPT_NAME="enver"  # original script name
+readonly SCRIPT_VERSION="3.10.4"
+readonly CURRENT_SCRIPT_NAME="${0##*/}"  # Saves the basename of the script file.
+readonly CURRENT_CALL="$0"
+readonly Tab="	"
 
-if [[ $# -eq 1 ]]; then  ## Reacts on the error case that enver is called without verb.
-  EXAMPLE_VERB="beg"
-  case "$1" in
-    -[veVcDdPpfa])
-      if [ "$1" = "-D" ] || [ "$1" = "-d" ]; then
-        EXAMPLE_VERB="erfragen"
-      fi
-      echo -e "\n\e[1;36m${script_name} $script_version"
-      echo -e "\n\e[0;31mFehler: Fehlendes Verb. Nach welchem Wort soll gesucht werden?\e[0m"
-      echo "Fragen Sie nach einem englischen Verb z. B. durch \"$(basename $0) $1 $EXAMPLE_VERB\"."
-      sleep 3
-      echo -e "\n\e[1;36mBEISPIEL: Frage nach dem Verb "$EXAMPLE_VERB"?\e[0m"
-      echo -e "\e[1;36mAUFRUF: $(basename ${0}) $1 $EXAMPLE_VERB\e[0m"
-      eval "$(basename $0) $1 $EXAMPLE_VERB"
-      echo
-      exit 1
-  esac
-fi
+# > Color Variables .........................................................
+
+readonly RED='\e[0;31m'
+readonly CYAN_BOLD='\e[1;36m'
+readonly WHITE_BOLD='\e[1;37m'
+readonly COLOR_OFF='\e[0m'
 
 # Default Values:
 tmpfile="/tmp/enver"
 linecounter="none"
 
 # Current Dynamic Values:
-vocabulary="$(dirname "$(which enver)")/dictverbs.txt"
-# vocabulary="$(dirname "$(which enver)")/cmcgnoosos-916510172-e6o859.txt"
+vocabulary="$(dirname "$(command -v enver)")/dictverbs.txt"
 quantity_of_records=$(wc -l < "$vocabulary")
 
 
-function replace_any {
+# > Functions: < ============================================================
+
+replace_any () {
   eval $1="\"$(sed -E "s:$2:$3:g" <<< "${!1}")\""
 }
 
 
-function get_terminal_height {
+get_terminal_height () {
 # Terminal height is needed to decide if a pager should be used to list output.
   for i in tput stty
   do
-    if [ "$(which ${i})" ]; then
+    if command -v ${i} >/dev/null; then
       linecounter="$i"
       break
     fi
@@ -121,7 +101,7 @@ function get_terminal_height {
 }
 
 
-function display_page_by_page {
+display_page_by_page () {
 
   local inptfile
   local cmd
@@ -143,7 +123,7 @@ function display_page_by_page {
     # Defines the pager program to use:
     for i in less most more pg
     do
-      if [ "$(which ${i})" ]; then
+      if command -v ${i} >/dev/null; then
         case "$i" in
           less)
           cmd="less -SX"
@@ -161,7 +141,7 @@ function display_page_by_page {
 }
 
 
-function define_numerus {
+define_numerus () {
     if [ "$1" -gt 1 ]; then
       object_name="$3"
     else
@@ -170,14 +150,14 @@ function define_numerus {
 }
 
 
-function default_output {
+default_output () {
   local searched="$1"
   grep -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary" | tr "\t" "#" | column -s"#" -t
   return "$(grep -c -E "^[[:blank:]]*(to )\<$searched\>$Tab" "$vocabulary")"
 }
 
 
-function print_all_verbs {
+print_all_verbs () {
   local searched="$1"
 
   get_terminal_height
@@ -238,7 +218,7 @@ function print_all_verbs {
 }
 
 
-function print_verbs_full {
+print_verbs_full () {
   # Finds the searched string if it is in the english field even if it's only
   # a part of a word.
   #
@@ -249,7 +229,7 @@ function print_verbs_full {
   return $?
 }
 
-function print_full {
+print_full () {
   # Finds the searched string if it is in the english field even if it's only
   # a part of a word. But it ignores the occurence of the string in the annotations
   # or tags at the end of the english field. Those annotations are written between
@@ -260,7 +240,7 @@ function print_full {
   return $?
 }
 
-function print_all {
+print_all () {
   # Fields are separated by tabs.  First field is English, second German.
   #
   # Finds all records/lines with the searched string in the first field, even
@@ -274,7 +254,7 @@ function print_all {
 }
 
 
-function approximate_search {
+approximate_search () {
 # This function uses agrep.
 #
 # Search levels 2, 4 and 6 are more fault tolerant than search levels 1,
@@ -305,9 +285,9 @@ function approximate_search {
   local len
   local max
 
-  echo -e "\nVersuch einer fehlertoleranten Suche startet." > /dev/stderr
-  if [ "$(which agrep)" ]; then
 
+  if command -v agrep > /dev/null; then
+    echo -e "\nDie fehlertolerante Suche startet." > /dev/stderr 
     for search_level in 1 2 3 4 5 6 7 8;
     do
 
@@ -427,7 +407,7 @@ function approximate_search {
 }
 
 
-function get_all_verbs {
+get_all_verbs () {
   local inptfile
   local searched="$1"
 
@@ -483,7 +463,7 @@ function get_all_verbs {
 }
 
 
-function sample_translations {  
+sample_translations () {  
   local verb=$1  
   local target_amount="$2"  # How many examples should the output provide?  
 
@@ -513,7 +493,7 @@ END {
 }  
 
 
-function deep_search_cascade {
+deep_search_cascade () {
   # This extended search tries to find data records by a cascade of regular expressions,
   # the cascade will be stopped if one regular expression has found any matching data record.
 
@@ -528,17 +508,17 @@ function deep_search_cascade {
       echo "Weitergehende Suche ohne Ergebnis." > /dev/stderr
       echo
       # sleep .5
-      echo "Suche nach jedem Vorkommen des Such-Strings startet." > /dev/stderr
+      echo "Suche nach jedem Vorkommen von \"$searched\" startet." > /dev/stderr
       print_all "$searched"
       if [ "$?" -ne 0 ]; then
-        echo "Die Zeichenkette \"$searched\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
+        echo "\"$searched\" kommt im englischen Teil der Datenbasis nicht vor." > /dev/stderr
         approximate_search "$searched"
       fi
     fi
   fi
 }
 
-function phrases {
+phrases () {
   # As phrases are identified lines which are beginning with an upper case letter or
   # containing "[Redewendung]" or containing "[idiom]".
   #
@@ -551,24 +531,24 @@ function phrases {
 }
 
 
-function get_amount_of_approximate_matches {
+get_amount_of_approximate_matches () {
 
     local searched="$1"
     local quantity
 
-    if [ $(which agrep) ]; then
+    if command -v agrep > /dev/null; then
       quantity=$(agrep -c1 "^[^$Tab]*$searched[^$Tab]*$Tab" "$vocabulary")
       if [ "$quantity" -gt 0 ]; then
 
         define_numerus $quantity "Datensatz" "Datensätze"
-        echo -e "\n\"$script_name -c $searched\" liefert $quantity $object_name. (Suche nach ungefähr übereinstimmenden Wörtern)" > /dev/stderr
+        echo -e "\n\"$SCRIPT_NAME -c $searched\" liefert $quantity $object_name. (Suche nach ungefähr übereinstimmenden Wörtern)" > /dev/stderr
 
       fi
     fi
 }
 
 
-function write_amount_of_phrases {
+write_amount_of_phrases () {
 
   local searched="$1"
   local quantity_of_phrases
@@ -578,12 +558,12 @@ function write_amount_of_phrases {
   if [ "$quantity_of_phrases" -gt 0 ]; then
 
     define_numerus $quantity_of_phrases "Redewendung" "Redewendungen"
-    echo "\"$script_name -P $searched\" findet $quantity_of_phrases $object_name." > /dev/stderr
+    echo "\"$SCRIPT_NAME -P $searched\" findet $quantity_of_phrases $object_name." > /dev/stderr
 
   fi
 }
 
-function write_total_amount {
+write_total_amount () {
   # Counts how many datasets the command "enver -V" finds.
 
   local searched="$1"
@@ -593,12 +573,12 @@ function write_total_amount {
   if [ "$quantity" -gt 0 ]; then
 
     define_numerus $quantity "Datensatz" "Datensätze"
-    echo -e  "\n\"$script_name -V $searched\" liefert $quantity $object_name." > /dev/stderr
+    echo -e  "\n\"$SCRIPT_NAME -V $searched\" liefert $quantity $object_name." > /dev/stderr
 
   fi
 }
 
-function count_cascade {
+count_cascade () {
   # Counts how many datasets the function "deep_search_cascade" for extended search finds.
   #
   # Extended search tries to find datasets by a cascade of three regular expressions, the
@@ -614,9 +594,9 @@ function count_cascade {
     fi
   fi
   if [ "$amount" -gt 1 ]; then
-    echo -e "\nDie vertiefte Suche mit \"$script_name -e $searched\" findet $amount Datensätze."
+    echo -e "\nDie vertiefte Suche mit \"$SCRIPT_NAME -e $searched\" findet $amount Datensätze."
   elif [ "$amount" -eq 1 ]; then
-    echo -e "\nDie vertiefte Suche mit \"$script_name -e $searched\" findet einen Datensatz."
+    echo -e "\nDie vertiefte Suche mit \"$SCRIPT_NAME -e $searched\" findet einen Datensatz."
   else
     echo "Die Wörterbuchdatei enthält keinen Datensatz mit der Zeichenkette \"$searched\" in Englisch."
   fi
@@ -624,23 +604,23 @@ function count_cascade {
 }
 
 
-function display_help_screen {
+display_help_screen () {
    echo "
-$script_name $script_version
-    \"$script_name\" zeigt Übersetzungen englischer Verben ins Deutsche an.
+$SCRIPT_NAME $SCRIPT_VERSION
+    \"$SCRIPT_NAME\" zeigt Übersetzungen englischer Verben ins Deutsche an.
 
 AUFRUFFORMAT:
-    $script_name [-v|-e|-V|-c|-D|-P|-p|-f|-a|-h] VOKABEL
+    $SCRIPT_NAME [-v|-e|-V|-c|-D|-P|-p|-f|-a|-h] VOKABEL
 
 BEISPIELE:
-    $script_name -v translate
-    $script_name translate
+    $SCRIPT_NAME -v translate
+    $SCRIPT_NAME translate
 
     (Beide Aufrufe bewirken das selbe. \"translate\" ist hier das Wort, nach dem gefragt wird.)
 
 AUFRUFPARAMETER:
     -v   Gibt schnell eine kurze Auskunft über ein englisches Verb.
-    -e   Kann für eine erweiterte Suche verwendet werden, nachdem \"$script_name -v\" erfolglos war.
+    -e   Kann für eine erweiterte Suche verwendet werden, nachdem \"$SCRIPT_NAME -v\" erfolglos war.
     -V   Sucht gründlich nach englischen Verben und listet alle dazu verfügbaren Datensätze auf.
     -c   Sucht nach englischen Wörtern, die dem Suchwort ähneln.
     -D   Sucht von einem deutschen Wort ausgehend nach englischen Verben.
@@ -666,10 +646,74 @@ ALTERNATIVE SPRECHENDE AUFRUFPARAMETER:
 " | more
 }
 
-### main ############
+
+help_if_called_without_parameter () {
+
+  if [[ $# -lt 1 ]]; then  ## Reacts on the error case that enver is called without any parameter or argument.
+    echo -e "\n${CYAN_BOLD}${SCRIPT_NAME} $SCRIPT_VERSION
+  \n${RED}Fehler: Zu wenige Aufrufparameter!${COLOR_OFF}
+  Fragen Sie nach einem englischen Verb z. B. durch \"$(basename $CURRENT_SCRIPT_NAME) beg\"."
+    sleep 4
+    echo -e "\n${CYAN_BOLD}BEISPIEL 1: Was bedeutet das Verb "beg"? (Kurzauskunft).${COLOR_OFF}
+  ${CYAN_BOLD}AUFRUF: $(basename $CURRENT_SCRIPT_NAME) beg${COLOR_OFF}"
+    eval "$CURRENT_SCRIPT_NAME beg"
+    sleep 2
+    echo -e "\n${CYAN_BOLD}BEISPIEL 2: Bedeutung von "beg" mit Redewendungen (engl. phrases).${COLOR_OFF}
+  ${CYAN_BOLD}AUFRUF: $(basename $CURRENT_SCRIPT_NAME) -p beg${COLOR_OFF}"
+    eval "$CURRENT_SCRIPT_NAME -p beg"
+    sleep 2
+    echo -e "\n${CYAN_BOLD}BEISPIEL 3: Bedeutungsübersicht zu "beg" aus maximal 8 Datensätzen.${COLOR_OFF}
+  ${CYAN_BOLD}AUFRUF: $(basename $CURRENT_SCRIPT_NAME) -s 8 beg${COLOR_OFF}"
+    eval "$CURRENT_SCRIPT_NAME -s 8 beg"
+    echo
+    exit 1
+  fi
+}
+
+
+help_if_called_without_verb () {
+  if [ $# -eq 1 ]; then  ## Reacts on the error case that enver is called without verb.
+    case "$1" in
+      -[DdGg]|--de-en|--german|--deutsch)
+        show_missing_verb_help "$1" "erfragen"
+        exit 1
+        ;;
+      --help|--hilf|-hilf|--hilfe|-hilfe|--whatis|-whatis|--version|-version)
+        return
+        ;;
+      -[veVcDdGgPpfas]|-Pv|-vP|--*)
+        show_missing_verb_help "$1" "beg"
+        exit 1
+        ;;
+    esac
+  fi
+}
+
+
+show_missing_verb_help () {
+  local option="$1"
+  local example_verb="$2"
+
+  echo -e "\n${CYAN_BOLD}${SCRIPT_NAME} $SCRIPT_VERSION"
+  echo -e "\n${RED}Fehler: Fehlendes Verb. Nach welchem Wort soll gesucht werden?${COLOR_OFF}"
+  echo "Fragen Sie nach einem englischen Verb z. B. durch \"$(basename $CURRENT_SCRIPT_NAME) $option $example_verb\"."
+  sleep 3
+  echo -e "\n${CYAN_BOLD}BEISPIEL: Frage nach dem Verb "$example_verb"?${COLOR_OFF}"
+  echo -e "${CYAN_BOLD}AUFRUF: $(basename ${CURRENT_SCRIPT_NAME}) "$option" $example_verb${COLOR_OFF}"
+  # was: eval "$(basename $CURRENT_SCRIPT_NAME) "$option" $example_verb"
+  "$CURRENT_CALL" "$option" "$example_verb"
+  echo
+}
+
+
+# > main < ============================================================
+
+help_if_called_without_verb "$@"
+help_if_called_without_parameter "$@"
+
+# > Call parameter Analysis: < ----------------------------------------
 
 case "$1" in
-
   -s)
     :
     ;;
@@ -781,7 +825,7 @@ case "$1" in
   ;;
 
   --version|-version|-\#)
-  echo -e "\n\t\e[1;37m$script_name $script_version\e[0m\n"
+  echo -e "\n\t${WHITE_BOLD}$SCRIPT_NAME $SCRIPT_VERSION${COLOR_OFF}\n"
   exit
   ;;
 
